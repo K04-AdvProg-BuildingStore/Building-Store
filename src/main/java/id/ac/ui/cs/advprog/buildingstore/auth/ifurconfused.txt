@@ -6,10 +6,15 @@ this part is specifically for zz:
     - however, you're NOT going to find a lot related to user roles and permissions there.
     - i have already implemented user roles (admin and user) in the database, enumerated 0 and 1.
     - when you first register rn, u will by default be registered as a user (0), bc it's coded that way in service/AuthenticationService.
-    - the bro who made that youtube actually DID implement more on user roles and permissions, he just nvr made a vid abt me (not any that i could find at least)
+    - the bro who made that youtube actually DID implement more on user roles and permissions, he just nvr made a vid abt it (not any that i could find at least)
     - instead, he just put it in a github repository: https://github.com/ali-bouali/spring-boot-3-jwt-security with minimal documentation
     - good luck
 
+TODO:
+    - implement user roles and permissions: zz
+    - implement logout: we'll think ab this later
+
+demo module:
 demo - this is just placeholder that directs u to an endpoint which says hello world, if ur alr authenticated.
 
 auth modules:
