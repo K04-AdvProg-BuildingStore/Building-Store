@@ -24,7 +24,7 @@ public class AuthenticationService {
         var user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER) //user will get a role of 0 according to the enum
+                .role(Role.CASHIER) //user will get a role of 0 according to the enum
                 .build();
         repository.save(user);
         var jwtToken = jwtService.generateToken(user);

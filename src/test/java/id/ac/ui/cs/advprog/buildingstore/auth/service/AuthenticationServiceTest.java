@@ -1,25 +1,26 @@
 package id.ac.ui.cs.advprog.buildingstore.auth.service;
 
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import id.ac.ui.cs.advprog.buildingstore.auth.controller.AuthenticationRequest;
 import id.ac.ui.cs.advprog.buildingstore.auth.controller.AuthenticationResponse;
 import id.ac.ui.cs.advprog.buildingstore.auth.controller.RegisterRequest;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.Role;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 class AuthenticationServiceTest {
 
@@ -52,7 +53,7 @@ class AuthenticationServiceTest {
         User savedUser = User.builder()
                 .username("testuser")
                 .password("encoded-password")
-                .role(Role.USER)
+                .role(Role.CASHIER)
                 .build();
 
         when(passwordEncoder.encode("password")).thenReturn("encoded-password");
@@ -76,7 +77,7 @@ class AuthenticationServiceTest {
         User user = User.builder()
                 .username("testuser")
                 .password("encoded-password")
-                .role(Role.USER)
+                .role(Role.CASHIER)
                 .build();
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))

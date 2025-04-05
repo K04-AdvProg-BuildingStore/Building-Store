@@ -1,13 +1,14 @@
 package id.ac.ui.cs.advprog.buildingstore.auth.model;
 
+import java.util.Collection;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import java.util.Collection;
-import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
 
 class UserTests {
 
@@ -19,7 +20,7 @@ class UserTests {
                 .id(1)
                 .username("testuser")
                 .password("password123")
-                .role(Role.USER)
+                .role(Role.CASHIER)
                 .build();
     }
 
@@ -28,7 +29,7 @@ class UserTests {
         Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
         assertNotNull(authorities);
         assertEquals(1, authorities.size());
-        assertTrue(authorities.contains(new SimpleGrantedAuthority("USER")));
+        assertTrue(authorities.contains(new SimpleGrantedAuthority("ROLE_CASHIER")));
     }
 
     @Test
@@ -63,7 +64,7 @@ class UserTests {
 
     @Test
     void testRoleEnum() {
-        assertEquals(Role.USER.name(), "USER");
+        assertEquals(Role.CASHIER.name(), "CASHIER");
         assertEquals(Role.ADMIN.name(), "ADMIN");
     }
 }
