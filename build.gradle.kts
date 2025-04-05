@@ -45,6 +45,7 @@ dependencies {
     testImplementation ("org.mockito:mockito-inline:4.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 tasks.withType<Test> {
