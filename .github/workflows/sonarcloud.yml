@@ -1,10 +1,10 @@
 name: SonarCloud Analysis
 
 on:
+  ## Run SonarCloud analysis on all branches
   push:
     branches:
-      - main
-
+      - '**'
   pull_request:
     types: [opened, synchronize, reopened]
 

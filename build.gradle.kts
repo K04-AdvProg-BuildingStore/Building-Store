@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.sonarqube") version "4.4.1.3373"
@@ -47,5 +48,20 @@ sonarqube {
         property("sonar.projectKey", "K04-AdvProg-BuildingStore_Building-Store")
         property("sonar.organization", "k04-advprog-buildingstore")
         property("sonar.host.url", "https://sonarcloud.io")
+    }
+}
+
+tasks.test {
+    filter {
+        excludeTestsMatching("*FunctionalTest")
+    }
+
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
     }
 }
