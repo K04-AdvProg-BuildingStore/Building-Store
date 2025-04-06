@@ -1,5 +1,7 @@
 package id.ac.ui.cs.advprog.buildingstore.auth.config;
 
+import id.ac.ui.cs.advprog.buildingstore.auth.model.Token;
+import id.ac.ui.cs.advprog.buildingstore.auth.repository.TokenRepository;
 import id.ac.ui.cs.advprog.buildingstore.auth.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 
@@ -26,6 +29,9 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private UserDetailsService userDetailsService;
+
+    @Mock
+    private TokenRepository tokenRepository;
 
     @Mock
     private HttpServletRequest request;
@@ -50,10 +56,17 @@ class JwtAuthenticationFilterTest {
         String username = "testUser";
         UserDetails userDetails = new User(username, "password", List.of());
 
+        Token storedToken = Token.builder()
+                .token(token)
+                .expired(false)
+                .revoked(false)
+                .build();
+
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtService.extractUsername(token)).thenReturn(username);
         when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
         when(jwtService.IsTokenValid(token, userDetails)).thenReturn(true);
+        when(tokenRepository.findByToken(token)).thenReturn(Optional.of(storedToken));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
