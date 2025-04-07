@@ -123,6 +123,49 @@ class AuthenticationServiceTest {
         verify(repository, never()).save(any());
         verify(jwtService, never()).generateToken(any());
     }
+
+    @Test
+    void testAuthenticationUsernameDoesNotExist() {
+        AuthenticationRequest request = new AuthenticationRequest();
+        request.setUsername("nonexistent");
+        request.setPassword("any");
+
+        when(repository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception =
+                org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+                    service.authenticate(request);
+                });
+
+        assertEquals("Username does not exist", exception.getMessage());
+    }
+
+    @Test
+    void testAuthenticationPasswordIsWrong() {
+        AuthenticationRequest request = new AuthenticationRequest();
+        request.setUsername("testuser");
+        request.setPassword("wrongpassword");
+
+        User user = User.builder()
+                .id(123)
+                .username("testuser")
+                .password("encoded-password")
+                .role(Role.CASHIER)
+                .build();
+
+        when(repository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new RuntimeException("Bad credentials"));
+
+        IllegalArgumentException exception =
+                org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+                    service.authenticate(request);
+                });
+
+        assertEquals("Invalid password", exception.getMessage());
+    }
+
+
 }
 
 
