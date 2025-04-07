@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -104,4 +105,24 @@ class AuthenticationServiceTest {
         verify(jwtService).generateToken(any(User.class));
         verify(tokenRepository).save(any(Token.class));
     }
+
+    @Test
+    void testRegisterWithExistingUsernameThrowsException() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("testuser");
+        request.setPassword("password");
+
+        when(repository.findByUsername("testuser")).thenReturn(Optional.of(new User()));
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            service.register(request);
+        });
+
+        assertEquals("Username already exists", thrown.getMessage());
+        verify(repository).findByUsername("testuser");
+        verify(repository, never()).save(any());
+        verify(jwtService, never()).generateToken(any());
+    }
 }
+
+
