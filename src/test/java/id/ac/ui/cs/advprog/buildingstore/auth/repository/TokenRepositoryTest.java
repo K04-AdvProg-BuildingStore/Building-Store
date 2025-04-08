@@ -13,6 +13,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.Role;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.Token;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 @DataJpaTest
 class TokenRepositoryTest {
@@ -195,5 +197,22 @@ class TokenRepositoryTest {
         // Then
         assertThat(result).hasSize(1);
         assertThat(result).extracting(Token::getToken).doesNotContain("revoked-token", "expired-revoked-token");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void RemoveOnlyRevokedOrExpiredTokens() {
+        List<Token> allTokensBefore = tokenRepository.findAll();
+        assertThat(allTokensBefore).hasSize(4);
+
+        int deletedCount = tokenRepository.deleteByExpiredTrueOrRevokedTrue();
+
+        assertThat(deletedCount).isEqualTo(3); // 1 valid token should remain
+        List<Token> remainingTokens = tokenRepository.findAll();
+        assertThat(remainingTokens).hasSize(1);
+        assertThat(remainingTokens.getFirst().getToken()).isEqualTo("valid-token");
+        assertThat(remainingTokens.getFirst().isExpired()).isFalse();
+        assertThat(remainingTokens.getFirst().isRevoked()).isFalse();
     }
 }
