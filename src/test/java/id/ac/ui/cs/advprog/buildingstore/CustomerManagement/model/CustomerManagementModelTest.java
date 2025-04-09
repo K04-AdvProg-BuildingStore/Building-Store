@@ -45,4 +45,44 @@ class CustomerManagementModelTest {
         customer.deactivateCustomer();
         assertFalse(customer.isActive());
     }
+
+    @Test
+    void testCustomerOnlyPhoneNumber() {
+        CustomerManagementModel customer2 = CustomerManagementModel.builder()
+                .phoneNumber("08123456789")
+                .isActive(true)
+                .build();
+            
+
+        assertEquals("08123456789", customer2.getPhoneNumber());
+        assertNull(customer2.getName());
+        assertNull(customer2.getEmail());
+        assertNull(customer2.getGender());
+        assertNull(customer2.getBirthday());
+        assertTrue(customer2.isActive());
+    }
+    @Test
+    void testCustomerBirthdayCanBeNull() {
+    CustomerManagementModel customer = CustomerManagementModel.builder()
+            .phoneNumber("0800000000")
+            .birthday(null)
+            .build();
+
+    assertNull(customer.getBirthday());
+    }
+    
+    @Test
+    void testCustomerwithMinimalData() {
+        CustomerManagementModel customer = CustomerManagementModel.builder()
+                .phoneNumber("0811223344")
+                .build();
+
+        assertEquals("0811223344", customer.getPhoneNumber());
+        assertFalse(customer.isActive());
+        assertNull(customer.getName());
+        assertNull(customer.getEmail());
+        assertNull(customer.getGender());
+        assertNull(customer.getBirthday());
+    }
 }
+
