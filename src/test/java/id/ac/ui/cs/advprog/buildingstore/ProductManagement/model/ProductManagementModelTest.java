@@ -55,4 +55,29 @@ class ProductManagementModelTest{
         product.setStatus("Discontinued");
         assertEquals("Discontinued", product.getStatus());
     }
+    @Test
+    void testRestockIncreasesQuantity() {
+        int initialQuantity = product.getQuantity();
+        product.restock(5);
+        assertEquals(initialQuantity + 5, product.getQuantity());
+    }
+
+    @Test
+    void testIsAvailableReturnsTrueWhenQuantityPositive() {
+        assertTrue(product.isAvailable());
+    }
+
+    @Test
+    void testIsAvailableReturnsFalseWhenQuantityZero() {
+        product.setQuantity(0);
+        assertFalse(product.isAvailable());
+    }
+
+    @Test
+    void testMarkOutOfStockSetsQuantityToZeroAndStatusToOutOfStock() {
+        product.markOutOfStock();
+        assertEquals(0, product.getQuantity());
+        assertEquals("Out of Stock", product.getStatus());
+    }
+
 }

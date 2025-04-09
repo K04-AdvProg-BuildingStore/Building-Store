@@ -32,10 +32,12 @@ public class ProductManagementModel {
     private User administrator;
     // Optional logic methods
     public boolean isAvailable() {
-        return "Available".equalsIgnoreCase(this.status);
+        return "Available".equalsIgnoreCase(this.status) && (this.quantity != null && this.quantity > 0);
     }
 
+
     public void markOutOfStock() {
+        this.quantity=0;
         this.status = "Out of Stock";
     }
 
