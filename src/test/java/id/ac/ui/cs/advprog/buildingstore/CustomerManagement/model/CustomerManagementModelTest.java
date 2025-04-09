@@ -70,7 +70,6 @@ class CustomerManagementModelTest {
 
     assertNull(customer.getBirthday());
     }
-    
     @Test
     void testCustomerwithMinimalData() {
         CustomerManagementModel customer = CustomerManagementModel.builder()
