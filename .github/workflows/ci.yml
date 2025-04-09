@@ -1,6 +1,5 @@
 name: Continuous Integration (CI)
 
-## Run CI jobs on all branches
 on:
   push:
     branches:
@@ -11,6 +10,10 @@ jobs:
   test:
     name: Run tests
     runs-on: ubuntu-22.04
+    env:
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
     steps:
       - name: Check out the Git repository
         uses: actions/checkout@v4
