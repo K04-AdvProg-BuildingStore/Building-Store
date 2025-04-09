@@ -39,6 +39,7 @@ class ProductManagementModelTest{
         assertEquals("Available", product.getStatus());
         assertEquals("Amazing Incredible Yummy Soda", product.getInformation());
     }
+
     @Test
     void testUpdateStock() {
         product.setQuantity(25);
