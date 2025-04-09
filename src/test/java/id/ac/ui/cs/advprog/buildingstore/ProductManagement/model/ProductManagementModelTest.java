@@ -1,21 +1,25 @@
 package id.ac.ui.cs.advprog.buildingstore.ProductManagement.model;
+
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.Role;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProductManagementModelTest{
+    private ProductManagementModel product;
+
     @BeforeEach
     void setUp() {
-        adminUser = User.builder()
+        User adminUser = User.builder()
                 .id(1)
                 .username("admin123")
                 .password("password")
                 .role(Role.ADMIN)
                 .build();
 
-        product = ProductModel.builder()
+        product = ProductManagementModel.builder()
                 .name("Soda")
                 .quantity(10)
                 .price(1000)
