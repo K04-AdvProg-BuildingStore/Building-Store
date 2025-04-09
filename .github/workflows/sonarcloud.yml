@@ -46,5 +46,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_ORG: ${{ secrets.SONAR_ORG }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
         run: |
           ./gradlew build sonar --stacktrace --info
