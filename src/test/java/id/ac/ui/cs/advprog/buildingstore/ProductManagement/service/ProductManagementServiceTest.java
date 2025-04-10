@@ -18,7 +18,7 @@ public class ProductManagementServiceTest {
     @BeforeEach
     void setUp() {
         repository = mock(ProductManagementRepository.class);
-        service = new ProductManagementService(repository);
+        service = new ProductManagementServiceImpl(repository);
     }
 
     @Test
