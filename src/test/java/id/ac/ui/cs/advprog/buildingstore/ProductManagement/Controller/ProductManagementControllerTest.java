@@ -111,4 +111,45 @@ public class ProductManagementControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Concrete"));
     }
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @Test
+    void testGetProductByIdNotFound() throws Exception {
+        Mockito.when(service.getProductById(2)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/products/2"))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @Test
+    void testDeleteProductNotFound() throws Exception {
+        Mockito.doThrow(new IllegalArgumentException("Product not found"))
+                .when(service).deleteProductById(99);
+
+        mockMvc.perform(delete("/products/99"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().json("{\"error\":\"Product not found\"}"));
+    }
+
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @Test
+    void testUpdateProductWithInvalidData() throws Exception {
+        ProductManagementModel invalidProduct = ProductManagementModel.builder()
+                .id(1)
+                .name("") // Invalid name
+                .price(-1) // Invalid price
+                .quantity(-5)
+                .status("")
+                .information("")
+                .build();
+
+        mockMvc.perform(put("/products/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidProduct)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
 }

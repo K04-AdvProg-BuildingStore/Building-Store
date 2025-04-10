@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.buildingstore.ProductManagement.controller;
+package id.ac.ui.cs.advprog.buildingstore.ProductManagement.Controller;
 
 import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.ProductManagement.service.ProductManagementService;
@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -29,8 +30,19 @@ public class ProductManagementController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductManagementModel> updateProduct(@PathVariable Integer id,
-                                                                @RequestBody ProductManagementModel updatedProduct) {
+    public ResponseEntity updateProduct(@PathVariable Integer id,
+                                        @RequestBody ProductManagementModel updatedProduct) {
+
+        if (updatedProduct.getName() == null || updatedProduct.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Product name cannot be empty");
+        }
+        if (updatedProduct.getPrice() < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
+        if (updatedProduct.getQuantity() < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+
         ProductManagementModel result = service.updateProductInfo(
                 id,
                 updatedProduct.getName(),
@@ -42,6 +54,7 @@ public class ProductManagementController {
         return ResponseEntity.ok(result);
     }
 
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
         service.deleteProductById(id);
@@ -52,5 +65,11 @@ public class ProductManagementController {
     public ResponseEntity<List<ProductManagementModel>> getAllProducts() {
         List<ProductManagementModel> products = service.getAllProducts();
         return ResponseEntity.ok(products);
+    }
+
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
     }
 }
