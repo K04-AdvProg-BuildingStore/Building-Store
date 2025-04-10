@@ -1,27 +1,29 @@
 package id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service;
 
-import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
-import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerManagementRepository;
+import java.util.Date;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-import java.util.Date;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerManagementRepository;
 
-
+@Service // 
 public class CustomerManagementService {
 
     private final CustomerManagementRepository repository;
-    
+
     public CustomerManagementService(CustomerManagementRepository repository) {
         this.repository = repository;
     }
 
     public CustomerManagementModel addCustomer(CustomerManagementModel customer){
-        if (customer.getPhoneNumber( ) == null || customer.getPhoneNumber().isBlank()){
+        if (customer.getPhoneNumber() == null || customer.getPhoneNumber().isBlank()){
             return null;
         }
         return repository.save(customer);
     }
+
     public Optional<CustomerManagementModel> getCustomerByPhone(String phoneNumber) {
         return repository.findByPhoneNumber(phoneNumber);
     }
@@ -46,8 +48,6 @@ public class CustomerManagementService {
             return repository.save(customer);
         }
 
-        return null; // or throw a custom exception
+        return null;
     }
-
-    
 }
