@@ -30,7 +30,7 @@ public class ProductManagementRepositoryTest {
         Optional<ProductManagementModel> found = repository.findById(product.getId());
 
         assertTrue(found.isPresent());
-        assertEquals("Pokemon PACK", found.get().getName());
+        assertEquals("Pokemon Pack", found.get().getName());
         assertEquals(10, found.get().getQuantity());
         assertEquals("Available", found.get().getStatus());
     }
