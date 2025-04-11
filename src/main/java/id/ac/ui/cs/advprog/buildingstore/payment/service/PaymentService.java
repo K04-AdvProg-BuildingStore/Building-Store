@@ -11,4 +11,19 @@ public interface PaymentService {
     Payment findById(UUID id);
     Payment update(UUID id, Payment payment);
     void delete(UUID id);
+    
+    // Template method pattern steps
+    default Payment processPayment(Payment payment) {
+        validatePayment(payment);
+        logPaymentAttempt(payment);
+        Payment result = executePayment(payment);
+        notifyPaymentComplete(result);
+        return result;
+    }
+    
+    // Steps to be implemented by concrete classes
+    void validatePayment(Payment payment);
+    void logPaymentAttempt(Payment payment);
+    Payment executePayment(Payment payment);
+    void notifyPaymentComplete(Payment payment);
 }
