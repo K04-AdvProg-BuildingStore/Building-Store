@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
-import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
+//import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
@@ -22,13 +22,13 @@ public class SalesItemService {
     }
 
     public SalesItem createSalesItem(
-            ProductManagementModel product,
+           // ProductManagementModel product,
             SalesTransaction transaction,
             int quantity,
             int price
     ) {
         SalesItem newItem = SalesItem.builder()
-                .product(product)
+               // .product(product)
                 .quantity(quantity)
                 .price(price)
                 .transaction(transaction)

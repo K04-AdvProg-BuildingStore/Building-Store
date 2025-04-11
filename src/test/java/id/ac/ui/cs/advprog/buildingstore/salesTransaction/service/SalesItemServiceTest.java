@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
-import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
+//import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
@@ -26,10 +26,10 @@ public class SalesItemServiceTest {
 
     @Test
     void testCreateSalesItem() {
-        ProductManagementModel product = ProductManagementModel.builder().id(1).build();
+       // ProductManagementModel product = ProductManagementModel.builder().id(1).build();
         SalesTransaction transaction = SalesTransaction.builder().id(1).build();
         SalesItem item = SalesItem.builder()
-                .product(product)
+             //   .product(product)
                 .transaction(transaction)
                 .quantity(3)
                 .price(50000)
@@ -37,7 +37,8 @@ public class SalesItemServiceTest {
 
         when(repository.save(any(SalesItem.class))).thenReturn(item);
 
-        SalesItem result = service.createSalesItem(product, transaction, 3, 50000);
+        //add variable product here
+        SalesItem result = service.createSalesItem(transaction, 3, 50000);
 
         assertThat(result.getQuantity()).isEqualTo(3);
         assertThat(result.getPrice()).isEqualTo(50000);
