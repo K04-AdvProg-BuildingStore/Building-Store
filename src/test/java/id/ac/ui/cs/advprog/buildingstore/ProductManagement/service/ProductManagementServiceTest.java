@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.buildingstore.ProductManagement.repository.ProductMan
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -123,5 +124,12 @@ public class ProductManagementServiceTest {
 
         assertNull(result);
         verify(repository, never()).save(any());
+    }
+    @Test
+    public void testSearchProductsByName() {
+        List<ProductManagementModel> results = service.searchProductsByName("Ham");
+
+        assertEquals(1, results.size());
+        assertEquals("Hammer", results.getFirst().getName());
     }
 }
