@@ -126,10 +126,23 @@ public class ProductManagementServiceTest {
         verify(repository, never()).save(any());
     }
     @Test
-    public void testSearchProductsByName() {
+    void testSearchProductsByName() {
+        ProductManagementModel hammer = ProductManagementModel.builder()
+                .id(1)
+                .name("Hammer")
+                .quantity(10)
+                .price(50000)
+                .status("Available")
+                .information("Steel hammer")
+                .build();
+
+        when(repository.findByNameContainingIgnoreCase("Ham"))
+                .thenReturn(List.of(hammer));
+
         List<ProductManagementModel> results = service.searchProductsByName("Ham");
 
         assertEquals(1, results.size());
-        assertEquals("Hammer", results.getFirst().getName());
+        assertEquals("Hammer", results.get(0).getName());
+        verify(repository, times(1)).findByNameContainingIgnoreCase("Ham");
     }
 }
