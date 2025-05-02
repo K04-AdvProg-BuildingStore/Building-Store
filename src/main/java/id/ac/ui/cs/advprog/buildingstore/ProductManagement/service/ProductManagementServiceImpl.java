@@ -62,4 +62,8 @@ public class ProductManagementServiceImpl implements ProductManagementService {
     public List<ProductManagementModel> getAllProducts() {
         return repository.findAll();
     }
+    @Override
+    public List<ProductManagementModel> searchProductsByName(String name) {
+        return repository.findByNameContainingIgnoreCase(name);
+    }
 }

@@ -1,4 +1,4 @@
-package id.ac.ui.cs.advprog.buildingstore.ProductManagement.controller;
+package id.ac.ui.cs.advprog.buildingstore.ProductManagement.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;

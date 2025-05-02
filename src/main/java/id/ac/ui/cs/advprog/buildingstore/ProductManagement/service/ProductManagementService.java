@@ -16,4 +16,6 @@ public interface ProductManagementService {
                                              Integer quantity, String status, String information);
 
     List<ProductManagementModel> getAllProducts();
+    List<ProductManagementModel> searchProductsByName(String name);
+
 }
