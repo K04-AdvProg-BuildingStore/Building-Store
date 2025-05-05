@@ -37,7 +37,7 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
-          
+
       - name: Releasing New Version
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -45,10 +45,11 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker rmi $(docker images -a -q)
+            docker stop building-store-app || true
+            docker rm building-store-app || true
+            docker rmi $(docker images -a -q) || true
             docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
-            source .env
             docker run -d \
             --name=building-store-app \
             -p 8080:8080 \
