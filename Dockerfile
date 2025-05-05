@@ -1,6 +1,6 @@
 FROM docker.io/library/eclipse-temurin:21-jdk-alpine AS builder
 
-WORKDIR /src/advshop
+WORKDIR /src/buildingstore
 COPY . .
 RUN ./gradlew clean bootJar
 
@@ -15,7 +15,7 @@ RUN addgroup -g ${USER_GID} ${USER_NAME} \
 
 USER ${USER_NAME}
 WORKDIR /opt/buildingstore
-COPY --from=builder --chown=${USER_UID}:${USER_GID} /src/advshop/build/libs/*.jar app.jar
+COPY --from=builder --chown=${USER_UID}:${USER_GID} /src/buildingstore/build/libs/*.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java"]
