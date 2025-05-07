@@ -25,27 +25,32 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping
+    @PostMapping("/create")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<Payment> createPayment(@RequestBody Payment payment) {
         return ResponseEntity.ok(paymentService.create(payment));
     }
 
-    @GetMapping
+    @GetMapping("/history")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<List<Payment>> getAllPayments() {
         return ResponseEntity.ok(paymentService.findAll());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/history/{id}")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<Payment> getPayment(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.findById(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<Payment> updatePayment(@PathVariable UUID id, @RequestBody Payment payment) {
         return ResponseEntity.ok(paymentService.update(id, payment));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePayment(@PathVariable UUID id) {
         paymentService.delete(id);
         return ResponseEntity.noContent().build();
