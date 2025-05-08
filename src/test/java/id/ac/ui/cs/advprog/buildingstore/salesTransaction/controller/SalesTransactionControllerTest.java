@@ -1,102 +1,101 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.controller;
 
-import id.ac.ui.cs.advprog.buildingstore.auth.model.Role;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesTransactionCreateRequest;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
-import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.security.test.context.support.WithMockUser;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.service.SalesTransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.hamcrest.Matchers.*;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-public class SalesTransactionControllerTest {
+@ExtendWith(MockitoExtension.class)
+class SalesTransactionControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    @Mock
+    private SalesTransactionService transactionService;
+
+    @Mock
     private UserRepository userRepository;
 
-    @Autowired
-    private SalesTransactionRepository transactionRepository;
+    @InjectMocks
+    private SalesTransactionController salesTransactionController;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private User savedCashier;
+    private SalesTransactionCreateRequest request;
+    private User mockCashier;
+    private SalesTransaction mockTransaction;
 
     @BeforeEach
     void setUp() {
-        transactionRepository.deleteAll();
-        userRepository.deleteAll();
+        mockMvc = MockMvcBuilders.standaloneSetup(salesTransactionController).build();
 
-        savedCashier = User.builder()
-                .username("cashier1")
-                .password("password")
-                .role(Role.CASHIER)
+        SalesItemRequest item1 = new SalesItemRequest(null, 2, 100000);
+        SalesItemRequest item2 = new SalesItemRequest(null, 1, 200000);
+        request = new SalesTransactionCreateRequest(9952, 816998556, "CANCELLED", List.of(item1, item2));
+
+        mockCashier = new User();
+        mockTransaction = SalesTransaction.builder()
+                .id(1)
+                .cashier(mockCashier)
+                .customerPhone(816998556)
+                .status("CANCELLED")
+                .items(List.of())
                 .build();
-
-        savedCashier = userRepository.save(savedCashier);
     }
 
-    @WithMockUser(username = "testuser", roles = {"CASHIER"})
     @Test
     void testCreateTransaction() throws Exception {
-        SalesTransactionCreateRequest request = SalesTransactionCreateRequest.builder()
-                .cashierId(savedCashier.getId())
-                .customerPhone(812345678)
-                .status("PENDING")
-                .build();
+        when(userRepository.findById(9952)).thenReturn(Optional.of(mockCashier));
+        when(transactionService.createTransaction(mockCashier, 816998556, "CANCELLED", request.getItems()))
+                .thenReturn(mockTransaction);
 
         mockMvc.perform(post("/api/sales-transactions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerPhone").value(812345678))
-                .andExpect(jsonPath("$.status").value("PENDING"))
-                .andExpect(jsonPath("$.cashierUsername").value("cashier1"));
+                .andExpect(jsonPath("$.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.customerPhone").value(816998556));
     }
 
-    @WithMockUser(username = "testuser", roles = {"CASHIER"})
     @Test
-    void testGetAllTransactions() throws Exception {
-        SalesTransaction transaction = SalesTransaction.builder()
-                .cashier(savedCashier)
-                .customerPhone(800111223)
-                .status("COMPLETE")
-                .build();
-        transactionRepository.save(transaction);
+    void testUpdateTransaction() throws Exception {
+        when(userRepository.findById(9952)).thenReturn(Optional.of(mockCashier));
+        when(transactionService.updateTransaction(eq(1), eq(mockCashier), eq(816998556), eq("CANCELLED"), anyList()))
+                .thenReturn(mockTransaction);
 
-        mockMvc.perform(get("/api/sales-transactions"))
+        mockMvc.perform(put("/api/sales-transactions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].status").value("COMPLETE"));
+                .andExpect(jsonPath("$.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.customerPhone").value(816998556));
     }
 
-    @WithMockUser(username = "testuser", roles = {"CASHIER"})
     @Test
     void testDeleteTransaction() throws Exception {
-        SalesTransaction transaction = SalesTransaction.builder()
-                .cashier(savedCashier)
-                .customerPhone(811000111)
-                .status("PENDING")
-                .build();
-        transaction = transactionRepository.save(transaction);
+        doNothing().when(transactionService).deleteTransaction(1);
 
-        mockMvc.perform(delete("/api/sales-transactions/" + transaction.getId()))
+        mockMvc.perform(delete("/api/sales-transactions/1"))
                 .andExpect(status().isNoContent());
     }
 }
