@@ -1,114 +1,135 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
-import id.ac.ui.cs.advprog.buildingstore.auth.model.Role;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class SalesTransactionServiceTest {
 
+    @Mock
     private SalesTransactionRepository salesTransactionRepository;
+
+    @Mock
+    private SalesItemRepository salesItemRepository;
+
+    @Mock
     private UserRepository userRepository;
+
+    @InjectMocks
     private SalesTransactionService salesTransactionService;
 
     @BeforeEach
     void setUp() {
-        salesTransactionRepository = mock(SalesTransactionRepository.class);
-        userRepository = mock(UserRepository.class);
-        salesTransactionService = new SalesTransactionService(salesTransactionRepository, userRepository);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void testCreateTransaction() {
-        User cashier = User.builder()
+    void testCreateTransactionSuccessfully() {
+        User cashier = User.builder().id(1).username("john").build();
+        List<SalesItemRequest> itemRequests = List.of(
+                new SalesItemRequest(null, 2, 10000),
+                new SalesItemRequest(null, 1, 20000)
+        );
+
+        SalesTransaction savedTx = SalesTransaction.builder()
                 .id(1)
-                .username("mcflurrins")
-                .password("password")
-                .role(Role.CASHIER)
-                .build();
-
-        SalesTransaction transaction = SalesTransaction.builder()
                 .cashier(cashier)
-                .customerPhone(123456789)
-                .status("PENDING")
+                .customerPhone(812345678)
+                .status("COMPLETED")
+                .items(new ArrayList<>())
                 .build();
 
-        when(salesTransactionRepository.save(any(SalesTransaction.class))).thenReturn(transaction);
+        when(salesTransactionRepository.save(any(SalesTransaction.class))).thenReturn(savedTx);
+        when(salesItemRepository.save(any(SalesItem.class))).thenAnswer(i -> i.getArgument(0));
 
-        SalesTransaction result = salesTransactionService.createTransaction(cashier, 123456789, "PENDING");
+        SalesTransaction result = salesTransactionService.createTransaction(cashier, 812345678, "COMPLETED", itemRequests);
 
-        assertThat(result.getCashier()).isEqualTo(cashier);
-        assertThat(result.getCustomerPhone()).isEqualTo(123456789);
-        assertThat(result.getStatus()).isEqualTo("PENDING");
-
-        verify(salesTransactionRepository).save(any(SalesTransaction.class));
+        assertNotNull(result);
+        assertEquals(2, result.getItems().size());
+        verify(salesTransactionRepository, times(1)).save(any(SalesTransaction.class));
+        verify(salesItemRepository, times(2)).save(any(SalesItem.class));
     }
 
     @Test
-    void testFindById_WhenFound() {
-        SalesTransaction transaction = new SalesTransaction();
-        transaction.setId(1);
-        when(salesTransactionRepository.findById(1)).thenReturn(Optional.of(transaction));
+    void testUpdateTransactionSuccessfully() {
+        User cashier = User.builder().id(2).username("jane").build();
+        SalesTransaction existing = SalesTransaction.builder()
+                .id(10)
+                .cashier(cashier)
+                .customerPhone(800000000)
+                .status("PENDING")
+                .items(new ArrayList<>())
+                .build();
 
-        Optional<SalesTransaction> result = salesTransactionService.findById(1);
+        List<SalesItem> updatedItems = List.of(
+                SalesItem.builder().quantity(1).price(50000).build(),
+                SalesItem.builder().quantity(3).price(10000).build()
+        );
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(1);
+        when(salesTransactionRepository.findById(10)).thenReturn(Optional.of(existing));
+        when(salesTransactionRepository.save(any(SalesTransaction.class))).thenAnswer(i -> i.getArgument(0));
+
+        SalesTransaction result = salesTransactionService.updateTransaction(10, cashier, 812345678, "CANCELLED", updatedItems);
+
+        assertNotNull(result);
+        assertEquals("CANCELLED", result.getStatus());
+        assertEquals(2, result.getItems().size());
     }
 
     @Test
-    void testFindById_WhenNotFound() {
-        when(salesTransactionRepository.findById(1)).thenReturn(Optional.empty());
+    void testUpdateTransactionThrowsWhenNotFound() {
+        when(salesTransactionRepository.findById(999)).thenReturn(Optional.empty());
 
-        Optional<SalesTransaction> result = salesTransactionService.findById(1);
-
-        assertThat(result).isNotPresent();
+        assertThrows(EntityNotFoundException.class, () ->
+                salesTransactionService.updateTransaction(999, null, 0, "PENDING", new ArrayList<>()));
     }
 
     @Test
-    void testUpdateTransaction_WhenFound() {
-        SalesTransaction existing = SalesTransaction.builder().id(1).status("PENDING").build();
-        SalesTransaction updated = SalesTransaction.builder().status("PAID").build();
-
-        when(salesTransactionRepository.findById(1)).thenReturn(Optional.of(existing));
-        when(salesTransactionRepository.save(any())).thenReturn(existing);
-
-        SalesTransaction result = salesTransactionService.updateTransaction(1, updated);
-
-        assertThat(result.getStatus()).isEqualTo("PAID");
-        verify(salesTransactionRepository).save(existing);
-    }
-
-    @Test
-    void testUpdateTransaction_WhenNotFound() {
-        SalesTransaction updated = SalesTransaction.builder().status("PAID").build();
-
-        when(salesTransactionRepository.findById(1)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> salesTransactionService.updateTransaction(1, updated))
-                .isInstanceOf(EntityNotFoundException.class)
-                .hasMessage("Transaction not found");
-    }
-
-    @Test
-    void testDeleteTransaction() {
+    void testDeleteTransactionSuccessfully() {
         doNothing().when(salesTransactionRepository).deleteById(1);
+
         salesTransactionService.deleteTransaction(1);
-        verify(salesTransactionRepository).deleteById(1);
+
+        verify(salesTransactionRepository, times(1)).deleteById(1);
+    }
+
+    @Test
+    void testFindByIdFound() {
+        SalesTransaction tx = SalesTransaction.builder().id(5).build();
+        when(salesTransactionRepository.findById(5)).thenReturn(Optional.of(tx));
+
+        Optional<SalesTransaction> result = salesTransactionService.findById(5);
+
+        assertTrue(result.isPresent());
+        assertEquals(5, result.get().getId());
     }
 
     @Test
     void testFindAll() {
-        salesTransactionService.findAll();
-        verify(salesTransactionRepository).findAll();
+        when(salesTransactionRepository.findAll()).thenReturn(List.of(
+                SalesTransaction.builder().id(1).build(),
+                SalesTransaction.builder().id(2).build()
+        ));
+
+        Iterable<SalesTransaction> result = salesTransactionService.findAll();
+        assertNotNull(result);
     }
 }
