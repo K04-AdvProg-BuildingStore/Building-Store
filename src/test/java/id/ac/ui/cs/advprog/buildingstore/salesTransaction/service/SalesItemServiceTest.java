@@ -1,53 +1,101 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
-//import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.*;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class SalesItemServiceTest {
+class SalesItemServiceTest {
 
-    private SalesItemRepository repository;
-    private SalesItemService service;
+    @Mock
+    private SalesItemRepository salesItemRepository;
+
+    @Mock
+    private SalesTransactionRepository salesTransactionRepository;
+
+    @InjectMocks
+    private SalesItemService salesItemService;
 
     @BeforeEach
     void setUp() {
-        repository = Mockito.mock(SalesItemRepository.class);
-        service = new SalesItemService(repository);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
     void testCreateSalesItem() {
-       // ProductManagementModel product = ProductManagementModel.builder().id(1).build();
-        SalesTransaction transaction = SalesTransaction.builder().id(1).build();
-        SalesItem item = SalesItem.builder()
-             //   .product(product)
-                .transaction(transaction)
-                .quantity(3)
-                .price(50000)
-                .build();
+        SalesTransaction tx = SalesTransaction.builder().id(1).build();
+        SalesItem item = SalesItem.builder().transaction(tx).quantity(5).price(10000).build();
 
-        when(repository.save(any(SalesItem.class))).thenReturn(item);
+        when(salesTransactionRepository.findById(1)).thenReturn(Optional.of(tx));
+        when(salesItemRepository.save(any(SalesItem.class))).thenReturn(item);
 
-        //add variable product here
-        SalesItem result = service.createSalesItem(transaction, 3, 50000);
+        SalesItem created = salesItemService.createSalesItem(tx, 5, 10000);
 
-        assertThat(result.getQuantity()).isEqualTo(3);
-        assertThat(result.getPrice()).isEqualTo(50000);
+        assertNotNull(created);
+        assertEquals(5, created.getQuantity());
+        assertEquals(10000, created.getPrice());
+        verify(salesItemRepository).save(any(SalesItem.class));
     }
 
     @Test
-    void testFindById_NotFound() {
-        when(repository.findById("non-existent-id")).thenReturn(Optional.empty());
-        Optional<SalesItem> result = service.findById("non-existent-id");
-        assertThat(result).isEmpty();
+    void testCreateSalesItemTransactionNotFound() {
+        SalesTransaction tx = SalesTransaction.builder().id(999).build();
+        when(salesTransactionRepository.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> salesItemService.createSalesItem(tx, 1, 5000));
+    }
+
+    @Test
+    void testGetSalesItemByIdFound() {
+        SalesItem item = SalesItem.builder().id(Integer.parseInt("321")).build(); // <-- FIXED
+        when(salesItemRepository.findById("321")).thenReturn(Optional.of(item));
+
+        Optional<SalesItem> result = salesItemService.getSalesItemById("321");
+
+        assertTrue(result.isPresent());
+        assertEquals(321, result.get().getId()); // now both sides are strings
+    }
+
+    @Test
+    void testUpdateSalesItemSuccessfully() {
+        SalesTransaction tx = SalesTransaction.builder().id(1).build();
+        SalesItem item = SalesItem.builder().id(Integer.parseInt("123")).transaction(tx).quantity(2).price(100).build();
+
+        when(salesItemRepository.findById("123")).thenReturn(Optional.of(item));
+        when(salesTransactionRepository.findById(1)).thenReturn(Optional.of(tx));
+        when(salesItemRepository.save(any(SalesItem.class))).thenReturn(item);
+
+        SalesItem updated = salesItemService.updateSalesItem(123, tx, 3, 200);
+
+        assertEquals(3, updated.getQuantity());
+        assertEquals(200, updated.getPrice());
+    }
+
+    @Test
+    void testDeleteSalesItemSuccessfully() {
+        SalesItem item = SalesItem.builder().id(Integer.parseInt("321")).build();
+        when(salesItemRepository.findById("321")).thenReturn(Optional.of(item));
+
+        salesItemService.deleteSalesItem(321);
+
+        verify(salesItemRepository).delete(item);
+    }
+
+    @Test
+    void testDeleteSalesItemNotFound() {
+        when(salesItemRepository.findById("404")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> salesItemService.deleteSalesItem(404));
     }
 }
