@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -27,4 +28,6 @@ public class SalesTransaction {
 
     private String status;
 
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SalesItem> items = new ArrayList<>();
 }
