@@ -2,12 +2,18 @@ package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -15,33 +21,57 @@ import java.util.Optional;
 public class SalesTransactionService {
 
     private final SalesTransactionRepository salesTransactionRepository;
-    private final UserRepository userRepository; // Inject this
+    private final SalesItemRepository salesItemRepository;
+    private final UserRepository userRepository;
 
-
-    public SalesTransaction createTransaction(User cashier, int customerPhone, String status) {
+    public SalesTransaction createTransaction(User cashier, int customerPhone, String status, List<SalesItemRequest> items) {
         SalesTransaction transaction = SalesTransaction.builder()
                 .cashier(cashier)
                 .customerPhone(customerPhone)
                 .status(status)
+                .items(new ArrayList<>())
                 .build();
 
-        return salesTransactionRepository.save(transaction);
+        SalesTransaction savedTransaction = salesTransactionRepository.save(transaction);
+
+        for (SalesItemRequest item : items) {
+            SalesItem newItem = SalesItem.builder()
+                    .quantity(item.getQuantity())
+                    .price(item.getPrice())
+                    .transaction(savedTransaction)
+                    .build();
+            savedTransaction.getItems().add(salesItemRepository.save(newItem));
+        }
+
+        return savedTransaction;
+    }
+
+
+    @Transactional
+    public SalesTransaction updateTransaction(Integer id, User cashier, int customerPhone, String status, List<SalesItem> items) {
+        SalesTransaction existing = salesTransactionRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
+
+        existing.setCashier(cashier);
+        existing.setCustomerPhone(customerPhone);
+        existing.setStatus(status);
+
+        // Clear and replace items
+        existing.getItems().clear();
+        if (items != null) {
+            for (SalesItem item : items) {
+                item.setTransaction(existing);
+                existing.getItems().add(item);
+            }
+        }
+
+        return salesTransactionRepository.save(existing);
     }
     
     public Optional<SalesTransaction> findById(Integer id) {
         return salesTransactionRepository.findById(id);
     }
 
-    public SalesTransaction updateTransaction(Integer id, SalesTransaction updatedTransaction) {
-        SalesTransaction existing = salesTransactionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
-
-        existing.setCashier(updatedTransaction.getCashier());
-        existing.setCustomerPhone(updatedTransaction.getCustomerPhone());
-        existing.setStatus(updatedTransaction.getStatus());
-
-        return salesTransactionRepository.save(existing);
-    }
 
     public void deleteTransaction(Integer id) {
         salesTransactionRepository.deleteById(id);
