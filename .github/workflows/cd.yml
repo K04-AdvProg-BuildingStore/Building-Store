@@ -2,11 +2,12 @@ name: Continuous Deployment (CD)
 
 on:
   push:
-    branches: [main]
-
+    branches:
+      - main
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -35,38 +36,24 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:${{ github.sha }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
 
-      - name: Deploy via SSH
+      - name: Releasing New Version
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            # Cleanup old container
             docker stop building-store-app || true
             docker rm building-store-app || true
-            
-            # Pull new image
+            docker rmi $(docker images -a -q) || true
             docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
-            
-            # Run with auto-restart and health check
             docker run -d \
-              --name building-store-app \
-              --restart unless-stopped \
-              -p 80:8080 \
-              -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
-              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
-              --health-interval=30s \
-              --health-timeout=10s \
-              --health-retries=3 \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
-            
-            # Cleanup old images
-            docker image prune -af --filter "until=24h"
+            --name=building-store-app \
+            -p 8080:8080 \
+            -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
+            -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
