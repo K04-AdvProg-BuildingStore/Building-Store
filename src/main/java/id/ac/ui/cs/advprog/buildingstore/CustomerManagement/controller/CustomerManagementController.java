@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.access.prepost.PreAuthorize;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.CustomerManagementService;
 
 @RestController
 @RequestMapping("/customers")
+@PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
+
 public class CustomerManagementController {
 
     private final CustomerManagementService service;
@@ -26,6 +28,7 @@ public class CustomerManagementController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<CustomerManagementModel> addCustomer(@RequestBody CustomerManagementModel customer) {
         CustomerManagementModel result = service.addCustomer(customer);
         if (result == null) {
@@ -35,6 +38,7 @@ public class CustomerManagementController {
     }
 
     @GetMapping("/{phoneNumber}")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<CustomerManagementModel> getCustomer(@PathVariable String phoneNumber) {
         Optional<CustomerManagementModel> result = service.getCustomerByPhone(phoneNumber);
         return result.map(ResponseEntity::ok)
@@ -42,6 +46,7 @@ public class CustomerManagementController {
     }
 
     @PutMapping("/{phoneNumber}")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<CustomerManagementModel> updateCustomer(
             @PathVariable String phoneNumber,
             @RequestBody CustomerManagementModel updatedFields) {
@@ -62,6 +67,7 @@ public class CustomerManagementController {
     }
 
     @DeleteMapping("/{phoneNumber}")
+    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<Void> deleteCustomer(@PathVariable String phoneNumber) {
         service.deleteCustomerByPhone(phoneNumber);
         return ResponseEntity.ok().build();
