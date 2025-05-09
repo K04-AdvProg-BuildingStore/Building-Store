@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,10 +38,10 @@ class PaymentServiceImplTest {
         testId = UUID.randomUUID();
         testPayment = Payment.builder()
                 .id(testId)
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
     }
 
@@ -96,10 +97,10 @@ class PaymentServiceImplTest {
     void update_WithExistingPayment_ShouldUpdateAndReturnPayment() {
         Payment updatedPayment = Payment.builder()
                 .id(testId)
-                .amount(200000)
+                .amount(BigDecimal.valueOf(200000))
                 .status(PaymentStatus.INSTALLMENT)
                 .method("Debit Card")
-                .salesTransactionId("ST67890")
+                .salesTransactionId(67890)
                 .build();
 
         when(paymentRepository.findById(testId)).thenReturn(Optional.of(testPayment));
@@ -140,10 +141,10 @@ class PaymentServiceImplTest {
     @Test
     void update_WithNonExistingPayment_ShouldReturnNull() {
         Payment updatedPayment = Payment.builder()
-                .amount(200000)
+                .amount(BigDecimal.valueOf(200000))
                 .status(PaymentStatus.INSTALLMENT)
                 .method("Debit Card")
-                .salesTransactionId("ST67890")
+                .salesTransactionId(67890)
                 .build();
 
         when(paymentRepository.findById(testId)).thenReturn(Optional.empty());

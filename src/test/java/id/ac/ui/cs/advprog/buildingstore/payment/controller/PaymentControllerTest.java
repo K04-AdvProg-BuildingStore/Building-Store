@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.controller;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -43,10 +44,10 @@ class PaymentControllerTest {
         testId = UUID.randomUUID();
         testPayment = Payment.builder()
                 .id(testId)
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
     }
 

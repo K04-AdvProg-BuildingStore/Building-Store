@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,10 +30,10 @@ class PaymentRepositoryTest {
     void save_WithValidPayment_ShouldPersistPayment() {
         // Create a payment
         Payment payment = Payment.builder()
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
 
         // Save the payment
@@ -47,7 +48,7 @@ class PaymentRepositoryTest {
         
         Optional<Payment> foundPayment = paymentRepository.findById(savedPayment.getId());
         assertTrue(foundPayment.isPresent());
-        assertEquals(payment.getAmount(), foundPayment.get().getAmount());
+        assertTrue(payment.getAmount().compareTo(foundPayment.get().getAmount()) == 0);
         assertEquals(payment.getStatus(), foundPayment.get().getStatus());
         assertEquals(payment.getMethod(), foundPayment.get().getMethod());
         assertEquals(payment.getSalesTransactionId(), foundPayment.get().getSalesTransactionId());
@@ -57,10 +58,10 @@ class PaymentRepositoryTest {
     void findById_WithExistingPayment_ShouldReturnPayment() {
         // Create a payment
         Payment payment = Payment.builder()
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
 
         // Persist the entity
@@ -72,7 +73,7 @@ class PaymentRepositoryTest {
         
         // Verify
         assertTrue(foundPayment.isPresent());
-        assertEquals(payment.getAmount(), foundPayment.get().getAmount());
+        assertTrue(payment.getAmount().compareTo(foundPayment.get().getAmount()) == 0);
     }
 
     @Test
@@ -84,17 +85,17 @@ class PaymentRepositoryTest {
         
         // Create payments
         Payment payment1 = Payment.builder()
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
 
         Payment payment2 = Payment.builder()
-                .amount(200000)
+                .amount(BigDecimal.valueOf(200000))
                 .status(PaymentStatus.INSTALLMENT)
                 .method("Debit Card")
-                .salesTransactionId("ST67890")
+                .salesTransactionId(67890)
                 .build();
 
         // Persist the entities
@@ -114,10 +115,10 @@ class PaymentRepositoryTest {
     void deleteById_WithExistingPayment_ShouldRemovePayment() {
         // Create a payment
         Payment payment = Payment.builder()
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
 
         // Persist the entity
@@ -138,10 +139,10 @@ class PaymentRepositoryTest {
     void update_WithExistingPayment_ShouldUpdatePayment() {
         // Create a payment
         Payment payment = Payment.builder()
-                .amount(100000)
+                .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.PAID)
                 .method("Credit Card")
-                .salesTransactionId("ST12345")
+                .salesTransactionId(12345)
                 .build();
 
         // Persist the entity
@@ -149,7 +150,7 @@ class PaymentRepositoryTest {
         entityManager.clear();
         
         // Update the payment
-        persistedPayment.setAmount(200000);
+        persistedPayment.setAmount(BigDecimal.valueOf(200000));
         persistedPayment.setStatus(PaymentStatus.INSTALLMENT);
         paymentRepository.save(persistedPayment);
         entityManager.flush();
@@ -158,7 +159,7 @@ class PaymentRepositoryTest {
         // Verify update
         Optional<Payment> updatedPayment = paymentRepository.findById(persistedPayment.getId());
         assertTrue(updatedPayment.isPresent());
-        assertEquals(200000, updatedPayment.get().getAmount());
+        assertTrue(BigDecimal.valueOf(200000).compareTo(updatedPayment.get().getAmount()) == 0);
         assertEquals(PaymentStatus.INSTALLMENT, updatedPayment.get().getStatus());
     }
     
