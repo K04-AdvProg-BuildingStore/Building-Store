@@ -1,53 +1,66 @@
 package id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model;
 
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class SupplyModelTest {
+public class SupplyModelTest {
 
     @Test
     void testNoArgsConstructorAndSetters() {
-        SupplyModel model = new SupplyModel();
+        SupplyModel supply = new SupplyModel();
+        assertNull(supply.getId());
+        assertNull(supply.getSupplier());
+        assertNull(supply.getSupplyStock());
+        assertNull(supply.getDeliveryAddress());
 
-        model.setId(42);
-        model.setSuppliedProduct("Widget");
-        model.setPhoneNumber("08123456789");
-        model.setSupplyStock(100);
-        model.setAddress("Jl. Sudirman No.1");
+        SupplierManagementModel supplier = new SupplierManagementModel();
+        supplier.setId(1);
+        supplier.setName("Test Supplier");
+        supplier.setPhoneNumber("12345");
+        supplier.setAddress("Test Address");
+        supplier.setActive(true);
 
-        assertEquals(42, model.getId());
-        assertEquals("Widget", model.getSuppliedProduct());
-        assertEquals("08123456789", model.getPhoneNumber());
-        assertEquals(100, model.getSupplyStock());
-        assertEquals("Jl. Sudirman No.1", model.getAddress());
+        supply.setId(10);
+        supply.setSupplier(supplier);
+        supply.setSupplyStock(50);
+        supply.setDeliveryAddress("Warehouse A");
+
+        assertEquals(10, supply.getId());
+        assertEquals(supplier, supply.getSupplier());
+        assertEquals(50, supply.getSupplyStock());
+        assertEquals("Warehouse A", supply.getDeliveryAddress());
     }
 
     @Test
-    void testAllArgsConstructorAndGetters() {
-        SupplyModel model = new SupplyModel(
-                7,
-                "Gadget",
-                "08987654321",
-                50,
-                "Jl. Thamrin No.2"
-        );
+    void testAllArgsConstructor() {
+        SupplierManagementModel supplier = new SupplierManagementModel(2, "Supplier2", "67890", "Addr2", false);
+        SupplyModel supply = new SupplyModel(20, supplier, 75, "Warehouse B");
 
-        assertEquals(7, model.getId());
-        assertEquals("Gadget", model.getSuppliedProduct());
-        assertEquals("08987654321", model.getPhoneNumber());
-        assertEquals(50, model.getSupplyStock());
-        assertEquals("Jl. Thamrin No.2", model.getAddress());
+        assertEquals(20, supply.getId());
+        assertEquals(supplier, supply.getSupplier());
+        assertEquals(75, supply.getSupplyStock());
+        assertEquals("Warehouse B", supply.getDeliveryAddress());
     }
 
     @Test
     void testEqualsAndHashCode() {
-        SupplyModel a = new SupplyModel(1, "Item", "0800000000", 10, "Addr A");
-        SupplyModel b = new SupplyModel(1, "Item", "0800000000", 10, "Addr A");
-        SupplyModel c = new SupplyModel(2, "Item", "0800000000", 10, "Addr A");
+        SupplierManagementModel supplier1 = new SupplierManagementModel(3, "Supplier3", "11111", "Addr3", true);
+        SupplierManagementModel supplier2 = new SupplierManagementModel(3, "Supplier3", "11111", "Addr3", true);
+        SupplyModel s1 = new SupplyModel(30, supplier1, 100, "Warehouse C");
+        SupplyModel s2 = new SupplyModel(30, supplier2, 100, "Warehouse C");
 
-        assertEquals(a, b);
-        assertEquals(a.hashCode(), b.hashCode());
-        assertNotEquals(a, c);
+        assertEquals(s1, s2);
+        assertEquals(s1.hashCode(), s2.hashCode());
+    }
+
+    @Test
+    void testToStringContainsAllFields() {
+        SupplierManagementModel supplier = new SupplierManagementModel(4, "Supplier4", "22222", "Addr4", true);
+        SupplyModel supply = new SupplyModel(40, supplier, 150, "Warehouse D");
+        String str = supply.toString();
+        assertTrue(str.contains("id=40"));
+        assertTrue(str.contains("supplier="));
+        assertTrue(str.contains("supplyStock=150"));
+        assertTrue(str.contains("deliveryAddress=Warehouse D"));
     }
 }
