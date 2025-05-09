@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,8 +60,8 @@ public class PaymentServiceImpl implements PaymentService {
     public void validatePayment(Payment payment) {
         log.info("Validating payment of {} using method: {}", 
                 payment.getAmount(), payment.getMethod());
-        if (payment.getAmount() <= 0) {
-            log.error("Invalid payment amount: {}", payment.getAmount());
+        if (payment.getAmount() == null || payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be positive.");
         }
     }
     

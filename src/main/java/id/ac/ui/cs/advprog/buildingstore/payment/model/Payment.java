@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.model;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
@@ -24,12 +25,12 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private int amount;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
     private String method;
 
-    private String salesTransactionId;
+    private Integer salesTransactionId;
 }
