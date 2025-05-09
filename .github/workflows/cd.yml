@@ -58,7 +58,7 @@ jobs:
             docker run -d \
               --name building-store-app \
               --restart unless-stopped \
-              -p 8080:8080 \
+              -p 80:8080 \
               -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
               -e SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }} \
               -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }} \
