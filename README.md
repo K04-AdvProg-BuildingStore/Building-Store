@@ -38,3 +38,8 @@
 | *Context Diagram*    | ![Context Diagram](img.png)       |
 | *Container Diagram*  | ![Container Diagram](img_1.png)   |
 | *Deployment Diagram* | ![Deployment Diagram](img_2.png)  |
+
+| Diagram Type                | Image                                                   |
+|-----------------------------|---------------------------------------------------------|
+| *Updated Context Diagram*   | ![Updated Context Diagram](img_3.png)                   |
+| *Updated Container Diagram* | ![Updated Container Diagram](img_4.png)                 |
