@@ -32,3 +32,9 @@
 - Deployment: Koyeb
 - Database: Postgres (Deployed on AWS)
 - Code Analysis: SonarQube Cloud
+
+| Diagram Type         | Image                             |
+|----------------------|-----------------------------------|
+| *Context Diagram*    | ![Context Diagram](img.png)       |
+| *Container Diagram*  | ![Container Diagram](img_1.png)   |
+| *Deployment Diagram* | ![Deployment Diagram](img_2.png)  |
