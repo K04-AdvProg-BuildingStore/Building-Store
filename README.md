@@ -82,4 +82,9 @@
 | *Code Diagram Sales Transaction*      |![image](https://github.com/user-attachments/assets/d0d38018-4283-4f27-bfaa-ed0e111385df)|
 | *Component Diagram Sales Transaction* | ![building store G4 drawio](https://github.com/user-attachments/assets/5ae60236-5e8d-4eed-a3d0-e5fcd0d9f553) |
 
+### Ghaza
+| Diagram Type                            | Image                                                                                                           |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| *Code Diagram Payment Management*      |![image](images/Payment-Code-Diagram.png)|
+| *Component Diagram Payment Management* | ![building store G4 drawio](images/Payment-Component-Diagram.png) |
 
