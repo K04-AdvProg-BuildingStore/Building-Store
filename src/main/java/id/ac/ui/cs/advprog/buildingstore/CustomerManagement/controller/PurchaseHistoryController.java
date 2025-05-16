@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.PurchaseHistoryModel;
-import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.PurchaseHistoryService;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.
+PurchaseHistoryService;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryViewDTO;
+
 
 @RestController
 @RequestMapping("/purchase-history")
@@ -38,6 +41,12 @@ public class PurchaseHistoryController {
     public ResponseEntity<List<PurchaseHistoryModel>> getPurchaseHistory(@PathVariable String phoneNumber) {
         List<PurchaseHistoryModel> history = service.getPurchaseHistory(phoneNumber);
         return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/transactions/{phoneNumber}")
+    public ResponseEntity<List<PurchaseHistoryViewDTO>> getCustomerPurchases(@PathVariable String phoneNumber) {
+        List<PurchaseHistoryViewDTO> purchases = service.getCustomerPurchaseHistory(phoneNumber);
+        return ResponseEntity.ok(purchases);
     }
 
     
