@@ -76,3 +76,10 @@
 | *Code Diagram Customer Management*      | ![customer_management_module](https://github.com/user-attachments/assets/b2d77923-0d80-4740-b0d2-66e411629f20)  |
 | *Component Diagram Customer Management* | ![Untitled Diagram drawio (1)](https://github.com/user-attachments/assets/2b873bf8-04d5-40c3-b031-b448d8a67017) |
 
+### Flori
+| Diagram Type                            | Image                                                                                                           |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| *Code Diagram Sales Transaction*      |![image](https://github.com/user-attachments/assets/d0d38018-4283-4f27-bfaa-ed0e111385df)|
+| *Component Diagram Sales Transaction* | ![building store G4 drawio](https://github.com/user-attachments/assets/5ae60236-5e8d-4eed-a3d0-e5fcd0d9f553) |
+
+
