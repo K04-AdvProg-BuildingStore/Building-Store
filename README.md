@@ -63,3 +63,8 @@
 |------------------------------------|------------------------------------------------|
 | *Code Diagram Supplier Management* | ![Code Diagram Supplier Management](img_5.png) |
 | *Component Diagram*                | ![Component Diagram](img_6.png)                |
+### Zakiy
+| Diagram Type                           | Image                                                             |
+|----------------------------------------|-------------------------------------------------------------------|
+| *Code Diagram Product Management*      | ![Code Diagram Product Management](images/productcodediagram.png) |
+| *Component Diagram Product Management* | ![Component Diagram](images/containerproduct.png)                 |
