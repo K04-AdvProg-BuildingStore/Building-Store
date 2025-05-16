@@ -56,3 +56,10 @@
    
 ### 2. External Payment System:
   Since we are dealing with a PoS system, we are obviously dealing with a lot of transactions. In our current architecture, we do not yet have a method of integrating our application into an external payment system. In a real-world context where our application is gaining massive success, our PoS would be interacting with all sorts of payments, such as debit, credit, OVO, Gopay, QRIS etc. Therefore our architecture has to be integrated with these external payment system(s), allowing it to track payment terminals (like debit card readers and credit card readers). This change was applied to our context diagram. 
+
+## Individual
+### Nala
+| Diagram Type                       | Image                                          |
+|------------------------------------|------------------------------------------------|
+| *Code Diagram Supplier Management* | ![Code Diagram Supplier Management](img_5.png) |
+| *Component Diagram*                | ![Component Diagram](img_6.png)                |
