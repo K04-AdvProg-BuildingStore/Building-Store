@@ -68,3 +68,11 @@
 |----------------------------------------|-------------------------------------------------------------------|
 | *Code Diagram Product Management*      | ![Code Diagram Product Management](images/productcodediagram.png) |
 | *Component Diagram Product Management* | ![Component Diagram](images/containerproduct.png)                 |
+
+
+### Jordan
+| Diagram Type                            | Image                                                                                                           |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| *Code Diagram Customer Management*      | ![customer_management_module](https://github.com/user-attachments/assets/b2d77923-0d80-4740-b0d2-66e411629f20)  |
+| *Component Diagram Customer Management* | ![Untitled Diagram drawio (1)](https://github.com/user-attachments/assets/2b873bf8-04d5-40c3-b031-b448d8a67017) |
+
