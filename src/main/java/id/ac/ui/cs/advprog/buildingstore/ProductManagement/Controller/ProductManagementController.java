@@ -66,6 +66,12 @@ public class ProductManagementController {
         List<ProductManagementModel> products = service.getAllProducts();
         return ResponseEntity.ok(products);
     }
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductManagementModel>> searchProductsByName(@RequestParam String name) {
+        List<ProductManagementModel> results = service.searchProductsByName(name);
+        return ResponseEntity.ok(results);
+    }
+
 
 
     @ExceptionHandler(IllegalArgumentException.class)
