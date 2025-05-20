@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto;
 
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,7 +11,7 @@ import java.util.List;
 public class SalesTransactionResponse {
     private Integer id;
     private Integer customerPhone;
-    private String status;
+    private TransactionStatus status;
     private String cashierUsername;
     private List<SalesItemResponse> items;
 

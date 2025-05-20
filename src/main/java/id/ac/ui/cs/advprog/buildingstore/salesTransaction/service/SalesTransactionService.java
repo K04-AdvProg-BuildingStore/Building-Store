@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,7 +25,7 @@ public class SalesTransactionService {
     private final SalesItemRepository salesItemRepository;
     private final UserRepository userRepository;
 
-    public SalesTransaction createTransaction(User cashier, int customerPhone, String status, List<SalesItemRequest> items) {
+    public SalesTransaction createTransaction(User cashier, int customerPhone, TransactionStatus status, List<SalesItemRequest> items) {
         SalesTransaction transaction = SalesTransaction.builder()
                 .cashier(cashier)
                 .customerPhone(customerPhone)
@@ -46,9 +47,8 @@ public class SalesTransactionService {
         return savedTransaction;
     }
 
-
     @Transactional
-    public SalesTransaction updateTransaction(Integer id, User cashier, int customerPhone, String status, List<SalesItem> items) {
+    public SalesTransaction updateTransaction(Integer id, User cashier, int customerPhone, TransactionStatus status, List<SalesItem> items) {
         SalesTransaction existing = salesTransactionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
 
@@ -72,7 +72,6 @@ public class SalesTransactionService {
         return salesTransactionRepository.findById(id);
     }
 
-
     public void deleteTransaction(Integer id) {
         salesTransactionRepository.deleteById(id);
     }
@@ -80,5 +79,4 @@ public class SalesTransactionService {
     public Iterable<SalesTransaction> findAll() {
         return salesTransactionRepository.findAll();
     }
-
 }
