@@ -26,7 +26,8 @@ public class SalesTransaction {
 
     private int customerPhone;
 
-    private String status;
+    @Enumerated(EnumType.ORDINAL)
+    private TransactionStatus status;
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SalesItem> items = new ArrayList<>();

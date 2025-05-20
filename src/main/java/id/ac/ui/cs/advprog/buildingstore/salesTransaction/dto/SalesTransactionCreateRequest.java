@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto;
 
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,10 +11,10 @@ import java.util.List;
 public class SalesTransactionCreateRequest {
     private Integer cashierId;
     private int customerPhone;
-    private String status;
+    private TransactionStatus status;
     private List<SalesItemRequest> items;
 
-    public SalesTransactionCreateRequest(Integer cashierId, int customerPhone, String status, List<SalesItemRequest> items) {
+    public SalesTransactionCreateRequest(Integer cashierId, int customerPhone, TransactionStatus status, List<SalesItemRequest> items) {
         this.cashierId = cashierId;
         this.customerPhone = customerPhone;
         this.status = status;
