@@ -94,15 +94,6 @@ public class SalesTransactionController {
         return ResponseEntity.noContent().build();
     }
 
-//    private SalesTransactionResponse toDto(SalesTransaction tx) {
-//        return SalesTransactionResponse.builder()
-//                .id(tx.getId())
-//                .customerPhone(tx.getCustomerPhone())
-//                .status(tx.getStatus())
-//                .cashierUsername(tx.getCashier() != null ? tx.getCashier().getUsername() : null)
-//                .build();
-//    }
-
     private SalesTransactionResponse toDto(SalesTransaction tx) {
         return SalesTransactionResponse.builder()
                 .id(tx.getId())
