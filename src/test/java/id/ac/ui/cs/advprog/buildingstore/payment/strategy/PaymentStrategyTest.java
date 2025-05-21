@@ -47,7 +47,7 @@ package id.ac.ui.cs.advprog.buildingstore.payment.strategy;
             fullPayment = Payment.builder()
                     .id(testId)
                     .amount(BigDecimal.valueOf(100000))
-                    .status(PaymentStatus.PAID)
+                    .status(PaymentStatus.FULL)
                     .method("Credit Card")
                     .salesTransactionId(transactionId)
                     .build();
@@ -66,7 +66,7 @@ package id.ac.ui.cs.advprog.buildingstore.payment.strategy;
         @Test
         void fullPaymentSupports_WithPaidStatus_ShouldReturnTrue() {
             // Verify
-            assertTrue(fullPaymentStrategy.supports(PaymentStatus.PAID));
+            assertTrue(fullPaymentStrategy.supports(PaymentStatus.FULL));
         }
 
         @Test
@@ -111,7 +111,7 @@ package id.ac.ui.cs.advprog.buildingstore.payment.strategy;
         void fullPaymentExecute_WithAlreadyPaidTransaction_ShouldThrowException() {
             // Arrange
             when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PAID");
+            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("FULL");
 
             // Act & Verify
             IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -153,7 +153,7 @@ package id.ac.ui.cs.advprog.buildingstore.payment.strategy;
         @Test
         void installmentPaymentSupports_WithPaidStatus_ShouldReturnFalse() {
             // Verify
-            assertFalse(installmentPaymentStrategy.supports(PaymentStatus.PAID));
+            assertFalse(installmentPaymentStrategy.supports(PaymentStatus.FULL));
         }
 
         @Test
@@ -231,7 +231,7 @@ package id.ac.ui.cs.advprog.buildingstore.payment.strategy;
         void installmentPaymentExecute_WithAlreadyPaidTransaction_ShouldThrowException() {
             // Arrange
             when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PAID");
+            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("FULL");
 
             // Act & Verify
             IllegalStateException exception = assertThrows(IllegalStateException.class,

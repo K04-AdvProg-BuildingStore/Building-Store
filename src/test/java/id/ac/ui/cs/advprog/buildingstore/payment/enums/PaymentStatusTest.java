@@ -11,13 +11,13 @@ class PaymentStatusTest {
         PaymentStatus[] statuses = PaymentStatus.values();
         
         assertEquals(2, statuses.length);
-        assertEquals(PaymentStatus.PAID, statuses[0]);
+        assertEquals(PaymentStatus.FULL, statuses[0]);
         assertEquals(PaymentStatus.INSTALLMENT, statuses[1]);
     }
 
     @Test
     void testPaymentStatusValueOf_WithValidValues() {
-        assertEquals(PaymentStatus.PAID, PaymentStatus.valueOf("PAID"));
+        assertEquals(PaymentStatus.FULL, PaymentStatus.valueOf("FULL"));
         assertEquals(PaymentStatus.INSTALLMENT, PaymentStatus.valueOf("INSTALLMENT"));
     }
     
@@ -30,13 +30,13 @@ class PaymentStatusTest {
     
     @Test
     void testPaymentStatusToString() {
-        assertEquals("PAID", PaymentStatus.PAID.toString());
+        assertEquals("FULL", PaymentStatus.FULL.toString());
         assertEquals("INSTALLMENT", PaymentStatus.INSTALLMENT.toString());
     }
     
     @Test
     void testPaymentStatusOrdinals() {
-        assertEquals(0, PaymentStatus.PAID.ordinal());
+        assertEquals(0, PaymentStatus.FULL.ordinal());
         assertEquals(1, PaymentStatus.INSTALLMENT.ordinal());
     }
 }
