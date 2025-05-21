@@ -64,6 +64,7 @@ sonarqube {
         property("sonar.projectKey", "K04-AdvProg-BuildingStore_Building-Store")
         property("sonar.organization", "k04-advprog-buildingstore")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.gradle.skipCompile", "true")
     }
 }
 
