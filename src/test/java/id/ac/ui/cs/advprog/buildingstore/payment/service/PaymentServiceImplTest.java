@@ -39,7 +39,7 @@ class PaymentServiceImplTest {
         testPayment = Payment.builder()
                 .id(testId)
                 .amount(BigDecimal.valueOf(100000))
-                .status(PaymentStatus.PAID)
+                .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();

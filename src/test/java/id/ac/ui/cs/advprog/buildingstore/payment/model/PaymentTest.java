@@ -15,7 +15,7 @@ class PaymentTest {
     void testPaymentBuilder() {
         UUID id = UUID.randomUUID();
         BigDecimal amount = BigDecimal.valueOf(100000);
-        PaymentStatus status = PaymentStatus.PAID;
+        PaymentStatus status = PaymentStatus.FULL;
         String method = "Credit Card";
         Integer salesTransactionId = 1738;
 
@@ -70,13 +70,13 @@ class PaymentTest {
         payment.setId(id);
         
         payment.setAmount(BigDecimal.valueOf(200000));
-        payment.setStatus(PaymentStatus.PAID);
+        payment.setStatus(PaymentStatus.FULL);
         payment.setMethod("Bank Transfer");
         payment.setSalesTransactionId(24680);
         
         assertEquals(id, payment.getId());
         assertEquals(BigDecimal.valueOf(200000), payment.getAmount());
-        assertEquals(PaymentStatus.PAID, payment.getStatus());
+        assertEquals(PaymentStatus.FULL, payment.getStatus());
         assertEquals("Bank Transfer", payment.getMethod());
         assertEquals(24680, payment.getSalesTransactionId());
     }
