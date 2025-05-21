@@ -23,7 +23,7 @@ public interface PurchaseHistoryRepository extends JpaRepository<PurchaseHistory
             si.quantity AS quantity,
             si.price AS price
         FROM customers c
-        JOIN sales_transaction st ON c.phone_number = st.customer_phone::text
+        JOIN sales_transaction st ON c.phone_number = CAST(st.customer_phone AS VARCHAR)
         JOIN sales_item si ON st.id = si.transaction_id
         WHERE c.phone_number = :phoneNumber
         """, nativeQuery = true)

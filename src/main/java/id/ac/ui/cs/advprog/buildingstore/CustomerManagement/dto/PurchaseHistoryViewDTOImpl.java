@@ -9,8 +9,8 @@ public class PurchaseHistoryViewDTOImpl implements PurchaseHistoryViewDTO {
     private String customerName;
     private String phoneNumber;
     private Integer transactionId;
-    private Integer status; // changed from String to Integer
-    private Integer productId; // changed from String to Integer
+    private Integer status; // changed from Enum to Integer
+    private Integer productId;
     private Integer quantity;
     private Double price;
 }
