@@ -19,35 +19,18 @@ import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryV
 @RestController
 @RequestMapping("/purchase-history")
 @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
-
 public class PurchaseHistoryController {
 
     private final PurchaseHistoryService service;
 
-    public PurchaseHistoryController(PurchaseHistoryService service) {
-        this.service = service;
-    }
-
-    @PostMapping
-    public ResponseEntity<PurchaseHistoryModel> addPurchase(@RequestBody PurchaseHistoryModel purchase) {
-        PurchaseHistoryModel result = service.addPurchase(purchase);
-        if (result == null) {
-            return ResponseEntity.badRequest().build(); // Phone number is required
+        public PurchaseHistoryController(PurchaseHistoryService service) {
+            this.service = service;
         }
-        return ResponseEntity.ok(result);
-    }
 
-    @GetMapping("/{phoneNumber}")
-    public ResponseEntity<List<PurchaseHistoryModel>> getPurchaseHistory(@PathVariable String phoneNumber) {
-        List<PurchaseHistoryModel> history = service.getPurchaseHistory(phoneNumber);
-        return ResponseEntity.ok(history);
-    }
 
-    @GetMapping("/transactions/{phoneNumber}")
-    public ResponseEntity<List<PurchaseHistoryViewDTO>> getCustomerPurchases(@PathVariable String phoneNumber) {
-        List<PurchaseHistoryViewDTO> purchases = service.getCustomerPurchaseHistory(phoneNumber);
-        return ResponseEntity.ok(purchases);
-    }
-
-    
+        @GetMapping("/{phoneNumber}")
+        public ResponseEntity<List<PurchaseHistoryViewDTO>> getPurchaseHistory(@PathVariable String phoneNumber) {
+            List<PurchaseHistoryViewDTO> history = service.getCustomerPurchaseHistory(phoneNumber);
+            return ResponseEntity.ok(history);
+        }
 }
