@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,7 +30,7 @@ class PaymentRepositoryTest {
         // Create a payment
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(100000))
-                .status(PaymentStatus.PAID)
+                .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();
@@ -59,7 +58,7 @@ class PaymentRepositoryTest {
         // Create a payment
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(100000))
-                .status(PaymentStatus.PAID)
+                .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();
@@ -86,7 +85,7 @@ class PaymentRepositoryTest {
         // Create payments
         Payment payment1 = Payment.builder()
                 .amount(BigDecimal.valueOf(100000))
-                .status(PaymentStatus.PAID)
+                .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();
@@ -116,7 +115,7 @@ class PaymentRepositoryTest {
         // Create a payment
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(100000))
-                .status(PaymentStatus.PAID)
+                .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();
@@ -140,7 +139,7 @@ class PaymentRepositoryTest {
         // Create a payment
         Payment payment = Payment.builder()
                 .amount(BigDecimal.valueOf(100000))
-                .status(PaymentStatus.PAID)
+                .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();
