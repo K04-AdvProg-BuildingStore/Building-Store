@@ -10,14 +10,7 @@ import java.util.List;
 @Builder
 public class SalesTransactionCreateRequest {
     private Integer cashierId;
-    private int customerPhone;
+    private Integer customerId;
     private TransactionStatus status;
     private List<SalesItemRequest> items;
-
-    public SalesTransactionCreateRequest(Integer cashierId, int customerPhone, TransactionStatus status, List<SalesItemRequest> items) {
-        this.cashierId = cashierId;
-        this.customerPhone = customerPhone;
-        this.status = status;
-        this.items = items;
-    }
 }
