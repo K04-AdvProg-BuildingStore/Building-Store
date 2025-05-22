@@ -1,6 +1,9 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository;
 
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -15,10 +18,13 @@ public class SalesTransactionRepositoryTest {
 
     @Test
     void testSaveAndFindById() {
-        // Create and save a transaction
+        User cashier = User.builder().id(1).username("cashier1").build();
+        CustomerManagementModel customer = CustomerManagementModel.builder().id(123).build();
+
         SalesTransaction transaction = SalesTransaction.builder()
-                .customerPhone(812345678)
-                .status("pending")
+                .cashier(cashier)
+                .customer(customer)
+                .status(TransactionStatus.PENDING)
                 .build();
 
         SalesTransaction saved = transactionRepository.save(transaction);
@@ -28,7 +34,7 @@ public class SalesTransactionRepositoryTest {
 
         // Assertions
         assertThat(found).isNotNull();
-        assertThat(found.getCustomerPhone()).isEqualTo(812345678);
-        assertThat(found.getStatus()).isEqualTo("pending");
+        assertThat(found.getCustomer().getId()).isEqualTo(123);
+        assertThat(found.getStatus()).isEqualTo(TransactionStatus.PENDING);
     }
 }
