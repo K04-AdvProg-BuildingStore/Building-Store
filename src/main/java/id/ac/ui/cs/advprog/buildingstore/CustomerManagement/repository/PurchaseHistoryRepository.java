@@ -18,7 +18,6 @@ public interface PurchaseHistoryRepository extends JpaRepository<PurchaseHistory
             c.name AS customerName,
             c.phone_number AS phoneNumber,
             st.id AS transactionId,
-            st.status AS status,
             si.product_id AS productId,
             si.quantity AS quantity,
             si.price AS price

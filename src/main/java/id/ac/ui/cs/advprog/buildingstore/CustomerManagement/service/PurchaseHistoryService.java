@@ -32,10 +32,9 @@ public class PurchaseHistoryService {
                 (String) row[0],
                 (String) row[1],
                 row[2] != null ? ((Number) row[2]).intValue() : null,
-                row[3] != null ? ((Number) row[3]).intValue() : null, // status as Integer
-                row[4] != null ? ((Number) row[4]).intValue() : null, // productId as Integer
-                row[5] != null ? ((Number) row[5]).intValue() : null,
-                row[6] != null ? ((Number) row[6]).doubleValue() : null
+                row[3] != null ? ((Number) row[3]).intValue() : null, // productId
+                row[4] != null ? ((Number) row[4]).intValue() : null, // quantity
+                row[5] != null ? ((Number) row[5]).doubleValue() : null // price
             ))
             .collect(Collectors.toList());
     }
