@@ -8,6 +8,8 @@ import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesTransactionRe
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.service.SalesTransactionService;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerManagementRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ import java.util.stream.StreamSupport;
 public class SalesTransactionController {
 
     private final SalesTransactionService transactionService;
+    private final UserRepository userRepository;
+    private final CustomerManagementRepository customerRepository;
 
     @GetMapping
     public ResponseEntity<List<SalesTransactionResponse>> getAllTransactions() {
@@ -33,23 +37,23 @@ public class SalesTransactionController {
         return ResponseEntity.ok(response);
     }
 
-    private final UserRepository userRepository;
-
     @PostMapping
     public ResponseEntity<SalesTransactionResponse> createTransaction(@RequestBody SalesTransactionCreateRequest request) {
         User cashier = userRepository.findById(request.getCashierId())
                 .orElseThrow(() -> new EntityNotFoundException("Cashier not found"));
 
+        CustomerManagementModel customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+
         SalesTransaction created = transactionService.createTransaction(
                 cashier,
-                request.getCustomerPhone(),
+                customer,
                 request.getStatus(),
                 request.getItems()
         );
 
         return ResponseEntity.ok(toDto(created));
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<SalesTransactionResponse> getTransaction(@PathVariable Integer id) {
@@ -58,7 +62,6 @@ public class SalesTransactionController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
     @PutMapping("/{id}")
     public ResponseEntity<SalesTransactionResponse> updateTransaction(
             @PathVariable Integer id,
@@ -66,6 +69,9 @@ public class SalesTransactionController {
 
         User cashier = userRepository.findById(request.getCashierId())
                 .orElseThrow(() -> new EntityNotFoundException("Cashier not found"));
+
+        CustomerManagementModel customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
 
         // Convert SalesItemRequest list to SalesItem list
         List<SalesItem> salesItems = request.getItems().stream().map(itemReq ->
@@ -78,15 +84,13 @@ public class SalesTransactionController {
         SalesTransaction updated = transactionService.updateTransaction(
                 id,
                 cashier,
-                request.getCustomerPhone(),
+                customer,
                 request.getStatus(),
                 salesItems
         );
 
         return ResponseEntity.ok(toDto(updated));
     }
-
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTransaction(@PathVariable Integer id) {
@@ -97,7 +101,7 @@ public class SalesTransactionController {
     private SalesTransactionResponse toDto(SalesTransaction tx) {
         return SalesTransactionResponse.builder()
                 .id(tx.getId())
-                .customerPhone(tx.getCustomerPhone())
+                .customerId(tx.getCustomer().getId())
                 .status(tx.getStatus())
                 .cashierUsername(tx.getCashier() != null ? tx.getCashier().getUsername() : null)
                 .items(tx.getItems().stream().map(item ->
@@ -106,3 +110,4 @@ public class SalesTransactionController {
                 .build();
     }
 }
+

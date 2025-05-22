@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
@@ -25,10 +26,10 @@ public class SalesTransactionService {
     private final SalesItemRepository salesItemRepository;
     private final UserRepository userRepository;
 
-    public SalesTransaction createTransaction(User cashier, int customerPhone, TransactionStatus status, List<SalesItemRequest> items) {
+    public SalesTransaction createTransaction(User cashier, CustomerManagementModel customer, TransactionStatus status, List<SalesItemRequest> items) {
         SalesTransaction transaction = SalesTransaction.builder()
                 .cashier(cashier)
-                .customerPhone(customerPhone)
+                .customer(customer)
                 .status(status)
                 .items(new ArrayList<>())
                 .build();
@@ -48,12 +49,12 @@ public class SalesTransactionService {
     }
 
     @Transactional
-    public SalesTransaction updateTransaction(Integer id, User cashier, int customerPhone, TransactionStatus status, List<SalesItem> items) {
+    public SalesTransaction updateTransaction(Integer id, User cashier, CustomerManagementModel customer, TransactionStatus status, List<SalesItem> items) {
         SalesTransaction existing = salesTransactionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
 
         existing.setCashier(cashier);
-        existing.setCustomerPhone(customerPhone);
+        existing.setCustomer(customer);
         existing.setStatus(status);
 
         // Clear and replace items
@@ -67,7 +68,7 @@ public class SalesTransactionService {
 
         return salesTransactionRepository.save(existing);
     }
-    
+
     public Optional<SalesTransaction> findById(Integer id) {
         return salesTransactionRepository.findById(id);
     }
