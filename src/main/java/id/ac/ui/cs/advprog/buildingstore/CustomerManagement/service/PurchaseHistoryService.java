@@ -1,15 +1,20 @@
 package id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service;
+
 import org.springframework.stereotype.Service;
+
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryViewDTO;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryViewDTOImpl;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.PurchaseHistoryModel;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.PurchaseHistoryRepository;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PurchaseHistoryService {
-    private final PurchaseHistoryRepository respository;
+    private final PurchaseHistoryRepository repository;
 
     public PurchaseHistoryService(PurchaseHistoryRepository repository){
-        this.respository = repository;
+        this.repository = repository;
     }
 
     public PurchaseHistoryModel addPurchase(PurchaseHistoryModel purchase) {
@@ -17,10 +22,21 @@ public class PurchaseHistoryService {
         if (phone == null || phone.isBlank()){
             return null;
         }
-        return respository.save(purchase);
+        return repository.save(purchase);
     }
-    public List<PurchaseHistoryModel> getPurchaseHistory(String phoneNumber){
-        return respository.findByPhoneNumber(phoneNumber);
+
+    public List<PurchaseHistoryViewDTO> getCustomerPurchaseHistory(String phoneNumber) {
+        List<Object[]> rawList = repository.findFullCustomerPurchaseHistoryRaw(phoneNumber);
+        return rawList.stream()
+            .map(row -> new PurchaseHistoryViewDTOImpl(
+                (String) row[0],
+                (String) row[1],
+                row[2] != null ? ((Number) row[2]).intValue() : null,
+                row[3] != null ? ((Number) row[3]).intValue() : null, // status as Integer
+                row[4] != null ? ((Number) row[4]).intValue() : null, // productId as Integer
+                row[5] != null ? ((Number) row[5]).intValue() : null,
+                row[6] != null ? ((Number) row[6]).doubleValue() : null
+            ))
+            .collect(Collectors.toList());
     }
-    
 }

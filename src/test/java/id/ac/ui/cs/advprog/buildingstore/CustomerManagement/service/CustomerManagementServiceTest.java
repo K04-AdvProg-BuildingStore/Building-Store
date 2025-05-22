@@ -114,6 +114,116 @@ public class CustomerManagementServiceTest {
         assertNull(result);
         verify(repository, never()).save(any());
     }
+    @Test
+    void testAddCustomerWithBlankPhoneShouldNotBeSaved() {
+        CustomerManagementModel customer = CustomerManagementModel.builder()
+                .name("Anonymous")
+                .phoneNumber("   ")
+                .build();
 
+        CustomerManagementModel result = service.addCustomer(customer);
+
+        assertNull(result);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateCustomerInfoWithAllNullExceptPhone() {
+        String phoneNumber = "08123456789";
+        Date birthday = new Date();
+        CustomerManagementModel existing = CustomerManagementModel.builder()
+                .phoneNumber(phoneNumber)
+                .name("Name")
+                .email("mail@mail.com")
+                .gender("Male")
+                .birthday(birthday)
+                .isActive(true)
+                .build();
+
+        when(repository.findByPhoneNumber(phoneNumber)).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CustomerManagementModel updated = service.updateCustomerInfo(
+                phoneNumber, null, null, null, null, null
+        );
+
+        assertNotNull(updated);
+        assertEquals("Name", updated.getName());
+        assertEquals("mail@mail.com", updated.getEmail());
+        assertEquals("Male", updated.getGender());
+        assertEquals(birthday, updated.getBirthday());
+        assertTrue(updated.isActive());
+        verify(repository).save(existing);
+    }
+
+    @Test
+    void testUpdateCustomerInfoWithSomeNullParameters() {
+        String phoneNumber = "08123456789";
+        Date birthday = new Date();
+        CustomerManagementModel existing = CustomerManagementModel.builder()
+                .phoneNumber(phoneNumber)
+                .name("Old Name")
+                .email("old@email.com")
+                .gender("Other")
+                .birthday(birthday)
+                .isActive(true)
+                .build();
+
+        when(repository.findByPhoneNumber(phoneNumber)).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CustomerManagementModel updated = service.updateCustomerInfo(
+                phoneNumber, "New Name", null, null, null, null
+        );
+
+        assertNotNull(updated);
+        assertEquals("New Name", updated.getName());
+        assertEquals("old@email.com", updated.getEmail());
+        assertEquals("Other", updated.getGender());
+        assertEquals(birthday, updated.getBirthday());
+        assertTrue(updated.isActive());
+        verify(repository).save(existing);
+    }
+
+    @Test
+    void testUpdateCustomerInfoWithIsActiveTrue() {
+        String phoneNumber = "08123456789";
+        CustomerManagementModel existing = CustomerManagementModel.builder()
+                .phoneNumber(phoneNumber)
+                .isActive(false)
+                .build();
+
+        when(repository.findByPhoneNumber(phoneNumber)).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CustomerManagementModel updated = service.updateCustomerInfo(
+                phoneNumber, null, null, null, null, true
+        );
+
+        assertNotNull(updated);
+        assertTrue(updated.isActive());
+        verify(repository).save(existing);
+    }
+
+    @Test
+    void testUpdateCustomerInfoWithBirthdayNull() {
+        String phoneNumber = "08123456789";
+        Date birthday = new Date();
+        CustomerManagementModel existing = CustomerManagementModel.builder()
+                .phoneNumber(phoneNumber)
+                .birthday(birthday)
+                .build();
+
+        when(repository.findByPhoneNumber(phoneNumber)).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CustomerManagementModel updated = service.updateCustomerInfo(
+                phoneNumber, null, null, null, null, null
+        );
+
+        assertNotNull(updated);
+        assertEquals(birthday, updated.getBirthday());
+        verify(repository).save(existing);
+    }
 
 }
