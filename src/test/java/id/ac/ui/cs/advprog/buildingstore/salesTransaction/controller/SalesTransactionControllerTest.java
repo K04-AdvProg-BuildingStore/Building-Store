@@ -69,7 +69,7 @@ class SalesTransactionControllerTest {
         when(userRepository.findById(9952)).thenReturn(Optional.of(mockCashier));
         when(customerRepository.findById(816998556)).thenReturn(Optional.of(mockCustomer));
         when(transactionService.createTransaction(eq(mockCashier), eq(mockCustomer), eq(TransactionStatus.PENDING), any())).thenReturn(mockTransaction);
-        mockMvc.perform(post("/api/v2/sales-transactions")
+        mockMvc.perform(post("/api/sales-transactions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -82,7 +82,7 @@ class SalesTransactionControllerTest {
         when(userRepository.findById(9952)).thenReturn(Optional.of(mockCashier));
         when(customerRepository.findById(816998556)).thenReturn(Optional.of(mockCustomer));
         when(transactionService.updateTransaction(eq(1), eq(mockCashier), eq(mockCustomer), eq(TransactionStatus.PENDING), any())).thenReturn(mockTransaction);
-        mockMvc.perform(put("/api/v2/sales-transactions/1")
+        mockMvc.perform(put("/api/sales-transactions/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -93,7 +93,7 @@ class SalesTransactionControllerTest {
     @Test
     void testDeleteRequest() throws Exception {
         doNothing().when(transactionService).deleteTransaction(1);
-        mockMvc.perform(delete("/api/v2/sales-transactions/1"))
+        mockMvc.perform(delete("/api/sales-transactions/1"))
                 .andExpect(status().isNoContent());
     }
 }

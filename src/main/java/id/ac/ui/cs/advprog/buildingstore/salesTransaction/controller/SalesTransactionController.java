@@ -49,7 +49,7 @@ public class SalesTransactionController {
                 cashier,
                 customer,
                 request.getStatus(),
-                request.getItems()
+                request.getItems() == null ? List.of() : request.getItems()
         );
 
         return ResponseEntity.ok(toDto(created));
@@ -74,7 +74,8 @@ public class SalesTransactionController {
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
 
         // Convert SalesItemRequest list to SalesItem list
-        List<SalesItem> salesItems = request.getItems().stream().map(itemReq ->
+        List<SalesItem> salesItems = (request.getItems() == null ? List.<id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest>of() : request.getItems())
+                .stream().map(itemReq ->
                 SalesItem.builder()
                         .quantity(itemReq.getQuantity())
                         .price(itemReq.getPrice())
@@ -104,7 +105,7 @@ public class SalesTransactionController {
                 .customerId(tx.getCustomer().getId())
                 .status(tx.getStatus())
                 .cashierUsername(tx.getCashier() != null ? tx.getCashier().getUsername() : null)
-                .items(tx.getItems().stream().map(item ->
+                .items((tx.getItems() == null ? List.<SalesItem>of() : tx.getItems()).stream().map(item ->
                         new SalesItemResponse(item.getId(), item.getTransaction().getId(), item.getQuantity(), item.getPrice())
                 ).toList())
                 .build();
