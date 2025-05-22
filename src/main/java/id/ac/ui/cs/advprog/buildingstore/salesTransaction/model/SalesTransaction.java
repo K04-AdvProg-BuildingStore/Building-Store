@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.model;
 
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,7 +25,10 @@ public class SalesTransaction {
     @JoinColumn(name = "cashier_id")
     private User cashier;
 
-    private int customerPhone;
+    //private int customerPhone;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = false)
+    private CustomerManagementModel customer;
 
     @Enumerated(EnumType.ORDINAL)
     private TransactionStatus status;
