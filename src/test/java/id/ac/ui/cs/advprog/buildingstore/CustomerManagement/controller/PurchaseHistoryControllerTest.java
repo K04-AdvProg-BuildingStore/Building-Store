@@ -1,7 +1,7 @@
 package id.ac.ui.cs.advprog.buildingstore.CustomerManagement.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.PurchaseHistoryModel;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryViewDTO;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryViewDTOImpl;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.PurchaseHistoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Date;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,46 +30,37 @@ public class PurchaseHistoryControllerTest {
     @MockBean
     private PurchaseHistoryService service;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private PurchaseHistoryModel samplePurchase;
+    private PurchaseHistoryViewDTO dto1, dto2;
 
     @BeforeEach
     void setUp() {
-        samplePurchase = PurchaseHistoryModel.builder()
-                .phoneNumber("08123456789")
-                .itemName("Cement")
-                .quantity(5)
-                .totalAmount(500000.0)
-                .purchaseDate(new Date())
-                .build();
+        dto1 = new PurchaseHistoryViewDTOImpl("Alice", "0811111111", 1, 1, 2, 10000.0); // productId, quantity, price
+        dto2 = new PurchaseHistoryViewDTOImpl("Alice", "0811111111", 2, 2, 1, 5000.0); // productId, quantity, price
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
-    void testAddPurchaseSuccess() throws Exception {
-        Mockito.when(service.addPurchase(any())).thenReturn(samplePurchase);
+    void testGetPurchaseHistoryReturnsDTOs() throws Exception {
+        Mockito.when(service.getCustomerPurchaseHistory("0811111111"))
+                .thenReturn(List.of(dto1, dto2));
 
-        mockMvc.perform(post("/purchase-history")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(samplePurchase)))
-                .andDo(print())
+        mockMvc.perform(get("/purchase-history/0811111111"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.itemName").value("Cement"))
-                .andExpect(jsonPath("$.phoneNumber").value("08123456789"));
+                .andExpect(jsonPath("$[0].customerName").value("Alice"))
+                .andExpect(jsonPath("$[0].productId").value(1))
+                .andExpect(jsonPath("$[0].quantity").value(2))
+                .andExpect(jsonPath("$[1].productId").value(2))
+                .andExpect(jsonPath("$[1].quantity").value(1));
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
-    void testGetPurchaseHistoryByPhoneNumber() throws Exception {
-        Mockito.when(service.getPurchaseHistory("08123456789"))
-                .thenReturn(List.of(samplePurchase));
+    void testGetPurchaseHistoryReturnsEmptyList() throws Exception {
+        Mockito.when(service.getCustomerPurchaseHistory(anyString()))
+                .thenReturn(List.of());
 
-        mockMvc.perform(get("/purchase-history/08123456789"))
-                .andDo(print())
+        mockMvc.perform(get("/purchase-history/0000000000"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].itemName").value("Cement"))
-                .andExpect(jsonPath("$[0].phoneNumber").value("08123456789"));
+                .andExpect(content().json("[]"));
     }
 }
