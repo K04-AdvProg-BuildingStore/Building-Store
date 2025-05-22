@@ -34,8 +34,8 @@ public class PurchaseHistoryControllerTest {
 
     @BeforeEach
     void setUp() {
-        dto1 = new PurchaseHistoryViewDTOImpl("Alice", "0811111111", 1, 1, 1, 2, 10000.0); // status and productId as Integer
-        dto2 = new PurchaseHistoryViewDTOImpl("Alice", "0811111111", 2, 0, 2, 1, 5000.0); // status and productId as Integer
+        dto1 = new PurchaseHistoryViewDTOImpl("Alice", "0811111111", 1, 1, 2, 10000.0); // productId, quantity, price
+        dto2 = new PurchaseHistoryViewDTOImpl("Alice", "0811111111", 2, 2, 1, 5000.0); // productId, quantity, price
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
@@ -48,7 +48,9 @@ public class PurchaseHistoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].customerName").value("Alice"))
                 .andExpect(jsonPath("$[0].productId").value(1))
-                .andExpect(jsonPath("$[1].status").value(0));
+                .andExpect(jsonPath("$[0].quantity").value(2))
+                .andExpect(jsonPath("$[1].productId").value(2))
+                .andExpect(jsonPath("$[1].quantity").value(1));
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
