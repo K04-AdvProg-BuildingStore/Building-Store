@@ -18,18 +18,36 @@
     <strong>JWT Token:</strong>
     <pre id="jwtToken"></pre>
 </div>
+
 <script>
-    document.getElementById('cashierBtn').onclick = async function() {
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function redirectLogin() {
         const token = localStorage.getItem('jwt');
         if (!token) {
-            alert('No JWT token found. Please login first.');
-            return;
+            window.location.href = 'authenticate.html';
         }
+    }
+
+    // Redirect if not logged in
+    redirectLogin();
+
+    // Print token
+    document.getElementById('jwtToken').textContent = localStorage.getItem('jwt') || 'Not logged in';
+
+    // Button event listeners
+    document.getElementById('cashierBtn').onclick = async function() {
         try {
+            //here im gonna call the demo controller cashier endpoint and the auth headers i can just
+            //retrieve by calling getAuthHeaders()
             const res = await fetch('/api/v1/demo-controller/cashier', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
+                headers: getAuthHeaders()
             });
             if (!res.ok) {
                 document.getElementById('result').textContent = 'You are not a cashier';
@@ -38,20 +56,14 @@
             const text = await res.text();
             document.getElementById('result').textContent = text;
         } catch (e) {
-            document.getElementById('result').textContent = 'You are not a cashier';
+            document.getElementById('result').textContent = 'Network failure. Try again later.';
         }
     };
+
     document.getElementById('adminBtn').onclick = async function() {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-            alert('No JWT token found. Please login first.');
-            return;
-        }
         try {
             const res = await fetch('/api/v1/demo-controller/admin', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
+                headers: getAuthHeaders()
             });
             if (!res.ok) {
                 document.getElementById('result').textContent = 'You are not an admin';
@@ -60,14 +72,17 @@
             const text = await res.text();
             document.getElementById('result').textContent = text;
         } catch (e) {
-            document.getElementById('result').textContent = 'You are not an admin';
+            document.getElementById('result').textContent = 'Network failure. Try again later.';
         }
     };
-    // Placeholder button actions
-    document.getElementById('placeholder1').onclick = function() { window.location.href = '#'; };
-    document.getElementById('placeholder2').onclick = function() { window.location.href = '#'; };
-    document.getElementById('placeholder3').onclick = function() { window.location.href = '#'; };
-    document.getElementById('placeholder4').onclick = function() { window.location.href = '#'; };
+
+    // Placeholders
+    document.getElementById('placeholder1').onclick = () => window.location.href = '#';
+    document.getElementById('placeholder2').onclick = () => window.location.href = '#';
+    document.getElementById('placeholder3').onclick = () => window.location.href = '#';
+    document.getElementById('placeholder4').onclick = () => window.location.href = '#';
+
+    // Logout
     document.getElementById('logoutBtn').onclick = async function() {
         const token = localStorage.getItem('jwt');
         if (!token) {
@@ -76,16 +91,11 @@
         }
         await fetch('/api/v1/auth/logout', {
             method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
+            headers: getAuthHeaders()
         });
         localStorage.removeItem('jwt');
         window.location.href = 'authenticate.html';
     };
-    // Print JWT token
-    document.getElementById('jwtToken').textContent = localStorage.getItem('jwt') || 'Not logged in';
 </script>
 </body>
 </html>
-
