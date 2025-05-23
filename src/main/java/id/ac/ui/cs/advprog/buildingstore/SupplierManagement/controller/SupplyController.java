@@ -30,10 +30,10 @@ public class SupplyController {
         return service.getSuppliesBySupplierPhone(phone);
     }
 
-//    @GetMapping("/by-product/{productId}")
-//    public List<SupplyModel> byProduct(@PathVariable Integer productId) {
-//        return service.getSuppliesByProduct(productId);
-//    }
+    @GetMapping("/by-product/{productId}")
+    public List<SupplyModel> byProduct(@PathVariable Integer productId) {
+        return service.getSuppliesByProduct(productId);
+    }
 
     @PostMapping
     public SupplyModel create(@RequestBody SupplyModel supply) {

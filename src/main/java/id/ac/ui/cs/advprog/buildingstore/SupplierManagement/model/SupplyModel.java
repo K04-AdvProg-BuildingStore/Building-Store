@@ -1,6 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model;
 
-//import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,9 +22,9 @@ public class SupplyModel {
     private SupplierManagementModel supplier;
 
     // link to the product being supplied
-    //@ManyToOne(optional = false)
-    //@JoinColumn(name = "product_id", nullable = false)
-    //private ProductManagementModel product;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "product_id", nullable = true)
+    private ProductManagementModel product;
 
     @Column(name = "supply_stock", nullable = false)
     private Integer supplyStock;

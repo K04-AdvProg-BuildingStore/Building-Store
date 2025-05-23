@@ -37,9 +37,9 @@ public class SupplyService {
         return supplyRepo.findBySupplierId(sup.getId());
     }
 
-//    public List<SupplyModel> getSuppliesByProduct(Integer productId) {
-//        return supplyRepo.findByProductId(productId);
-//    }
+    public List<SupplyModel> getSuppliesByProduct(Integer productId) {
+        return supplyRepo.findByProductId(productId);
+    }
 
     public SupplyModel createSupply(SupplyModel supply) {
         SupplierManagementModel sup = supplierService
@@ -50,7 +50,7 @@ public class SupplyService {
         return supplyRepo.save(supply);
     }
 
-    /** Update an existing restock event */
+    // Update an existing restock event
     public SupplyModel updateSupply(Integer id, SupplyModel updates) {
         SupplyModel existing = getSupplyById(id);
 
