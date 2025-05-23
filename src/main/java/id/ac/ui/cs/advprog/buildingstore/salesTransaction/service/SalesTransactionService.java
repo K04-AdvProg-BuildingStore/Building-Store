@@ -9,6 +9,8 @@ import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.repository.ProductManagementRepository;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class SalesTransactionService {
     private final SalesTransactionRepository salesTransactionRepository;
     private final SalesItemRepository salesItemRepository;
     private final UserRepository userRepository;
+    private final ProductManagementRepository productRepository;
 
     public SalesTransaction createTransaction(User cashier, CustomerManagementModel customer, TransactionStatus status, List<SalesItemRequest> items) {
         SalesTransaction transaction = SalesTransaction.builder()
@@ -37,7 +40,13 @@ public class SalesTransactionService {
         SalesTransaction savedTransaction = salesTransactionRepository.save(transaction);
 
         for (SalesItemRequest item : items) {
+            ProductManagementModel product = null;
+            if (item.getProductId() != null) {
+                product = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+            }
             SalesItem newItem = SalesItem.builder()
+                    .product(product)
                     .quantity(item.getQuantity())
                     .price(item.getPrice())
                     .transaction(savedTransaction)

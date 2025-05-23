@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SalesItemRequest {
     private SalesTransaction transaction;
+    private Integer productId;
     private int quantity;
     private int price;
 }

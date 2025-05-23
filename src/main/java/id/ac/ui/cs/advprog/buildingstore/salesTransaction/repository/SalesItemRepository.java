@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SalesItemRepository extends JpaRepository<SalesItem, String> {
+public interface SalesItemRepository extends JpaRepository<SalesItem, Integer> {
     void deleteAllByTransactionId(Integer transactionId);
 
 }
