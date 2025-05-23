@@ -12,6 +12,7 @@
 <button id="placeholder2">Placeholder 2</button>
 <button id="placeholder3">Placeholder 3</button>
 <button id="placeholder4">Placeholder 4</button>
+<button id="logoutBtn">Log Out</button>
 <div id="result"></div>
 <div>
     <strong>JWT Token:</strong>
@@ -67,6 +68,21 @@
     document.getElementById('placeholder2').onclick = function() { window.location.href = '#'; };
     document.getElementById('placeholder3').onclick = function() { window.location.href = '#'; };
     document.getElementById('placeholder4').onclick = function() { window.location.href = '#'; };
+    document.getElementById('logoutBtn').onclick = async function() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+            return;
+        }
+        await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        localStorage.removeItem('jwt');
+        window.location.href = 'authenticate.html';
+    };
     // Print JWT token
     document.getElementById('jwtToken').textContent = localStorage.getItem('jwt') || 'Not logged in';
 </script>
