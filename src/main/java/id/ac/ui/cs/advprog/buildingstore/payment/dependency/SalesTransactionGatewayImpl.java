@@ -60,7 +60,7 @@ public class SalesTransactionGatewayImpl implements SalesTransactionGateway {
                 salesTransactionService.updateTransaction(
                     salesTransactionId,
                     transaction.getCashier(),
-                    transaction.getCustomerPhone(),
+                    transaction.getCustomer(),
                     status,
                     transaction.getItems()
                 );
