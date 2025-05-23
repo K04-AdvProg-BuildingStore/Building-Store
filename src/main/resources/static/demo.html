@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo Controller</title>
+</head>
+<body>
+<h1>Demo Homepage</h1>
+<h2>Demo Controller Endpoint</h2>
+<button id="cashierBtn">Cashier Endpoint</button>
+<button id="adminBtn">Admin Endpoint</button>
+<button id="placeholder1">Placeholder 1</button>
+<button id="placeholder2">Placeholder 2</button>
+<button id="placeholder3">Placeholder 3</button>
+<button id="placeholder4">Placeholder 4</button>
+<div id="result"></div>
+<div>
+    <strong>JWT Token:</strong>
+    <pre id="jwtToken"></pre>
+</div>
+<script>
+    document.getElementById('cashierBtn').onclick = async function() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            alert('No JWT token found. Please login first.');
+            return;
+        }
+        try {
+            const res = await fetch('/api/v1/demo-controller/cashier', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            if (!res.ok) {
+                document.getElementById('result').textContent = 'You are not a cashier';
+                return;
+            }
+            const text = await res.text();
+            document.getElementById('result').textContent = text;
+        } catch (e) {
+            document.getElementById('result').textContent = 'You are not a cashier';
+        }
+    };
+    document.getElementById('adminBtn').onclick = async function() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            alert('No JWT token found. Please login first.');
+            return;
+        }
+        try {
+            const res = await fetch('/api/v1/demo-controller/admin', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            if (!res.ok) {
+                document.getElementById('result').textContent = 'You are not an admin';
+                return;
+            }
+            const text = await res.text();
+            document.getElementById('result').textContent = text;
+        } catch (e) {
+            document.getElementById('result').textContent = 'You are not an admin';
+        }
+    };
+    // Placeholder button actions
+    document.getElementById('placeholder1').onclick = function() { window.location.href = '#'; };
+    document.getElementById('placeholder2').onclick = function() { window.location.href = '#'; };
+    document.getElementById('placeholder3').onclick = function() { window.location.href = '#'; };
+    document.getElementById('placeholder4').onclick = function() { window.location.href = '#'; };
+    // Print JWT token
+    document.getElementById('jwtToken').textContent = localStorage.getItem('jwt') || 'Not logged in';
+</script>
+</body>
+</html>
+
