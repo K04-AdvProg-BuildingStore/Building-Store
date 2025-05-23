@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Sales Transaction</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        form { max-width: 400px; margin: 40px auto; }
+        label { display: block; margin-top: 12px; }
+        input, select { width: 100%; padding: 8px; margin-top: 4px; }
+        button { margin-top: 20px; }
+    </style>
+</head>
+<body>
+<h2>Create Sales Transaction</h2>
+<form id="createForm">
+    <label>Customer ID
+        <input type="number" name="customerId" required>
+    </label>
+    <label>Cashier ID
+        <input type="number" name="cashierId" required>
+    </label>
+    <label>Status
+        <select name="status" required>
+            <option value="0">PENDING</option>
+            <option value="1">PAID</option>
+        </select>
+    </label>
+    <button type="submit">Create</button>
+</form>
+<script>
+    document.getElementById('createForm').onsubmit = async function(e) {

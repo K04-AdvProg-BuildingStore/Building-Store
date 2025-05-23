@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Sales Transaction</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        form { max-width: 600px; margin: 40px auto; }
+        label { display: block; margin-top: 12px; }
+        input, select { width: 100%; padding: 8px; margin-top: 4px; }
+        button { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #f4f4f4; }
+        .actions button { margin: 0 2px; }
+    </style>
+</head>
+<body>
+<h2>Update Sales Transaction</h2>
+<form id="updateForm">
+    <label>Customer ID
+        <input type="number" name="customerId" required>
+    </label>
+    <label>Cashier ID
+        <input type="number" name="cashierId" required>
+    </label>
+    <label>Status
+        <select name="status" required>
+            <option value="0">PENDING</option>
+            <option value="1">PAID</option>
+        </select>
+    </label>
+    <h3>Sales Items</h3>
+    <table id="itemsTable">
+        <thead>
+        <tr>
+            <th>Product ID</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th class="actions">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Sales items will be rendered here -->
+        </tbody>
+    </table>
+    <button type="button" onclick="addItemRow()">Add Item</button>
+    <button type="submit">Update</button>
+</form>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    let items = [];
+
+    async function loadTransaction() {
+        const res = await fetch(`/api/sales-transactions/${id}`, {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt')
+            }
+        });
+        if (!res.ok) return;
+        const tx = await res.json();
+        document.querySelector('[name="customerId"]').value = tx.customerId;
+        document.querySelector('[name="cashierId"]').value = tx.cashierId || '';
+        document.querySelector('[name="status"]').value = tx.status === "PENDING" ? 0 : 1;
+        items = tx.items || [];
+        renderItems();
+    }
+
+    function renderItems() {
+        const tbody = document.getElementById('itemsTable').querySelector('tbody');
+        tbody.innerHTML = '';
+        items.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="number" value="${item.productId}" onchange="updateItem(${idx}, 'productId', this.value)" required></td>
+                <td><input type="number" value="${item.quantity}" min="1" onchange="updateItem(${idx}, 'quantity', this.value)" required></td>
+                <td><input type="number" value="${item.price}" min="0" onchange="updateItem(${idx}, 'price', this.value)" required></td>
+                <td class="actions">
+                    <button type="button" onclick="removeItemRow(${idx})">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function addItemRow() {
+        items.push({ productId: '', quantity: 1, price: 0 });
+        renderItems();
+    }
+
+    function removeItemRow(idx) {
+        items.splice(idx, 1);
+        renderItems();
+    }
+
+    function updateItem(idx, field, value) {
+        items[idx][field] = field === 'productId' || field === 'quantity' || field === 'price' ? parseInt(value) : value;
+    }
+
+    document.getElementById('updateForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const data = {
+            customerId: parseInt(this.customerId.value),
+            cashierId: parseInt(this.cashierId.value),
+            status: parseInt(this.status.value),
+            items: items.map(item => ({
+                productId: parseInt(item.productId),
+                quantity: parseInt(item.quantity),
+                price: parseInt(item.price)
+            }))
+        };
+        await fetch(`/api/sales-transactions/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt')
+            },
+            body: JSON.stringify(data)
+        });
+        window.location.href = 'sales-transactions.html';
+    };
+
+    loadTransaction();
+    window.addItemRow = addItemRow;
+    window.removeItemRow = removeItemRow;
+    window.updateItem = updateItem;
+</script>
+</body>
+</html>
