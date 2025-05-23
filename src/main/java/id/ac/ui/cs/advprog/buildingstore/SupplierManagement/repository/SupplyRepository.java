@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface SupplyRepository extends JpaRepository<SupplyModel, Integer> {
     List<SupplyModel> findBySupplierId(Integer supplierId);
-  //  List<SupplyModel> findByProductId(Integer productId);
+    List<SupplyModel> findByProductId(Integer productId);
 }
