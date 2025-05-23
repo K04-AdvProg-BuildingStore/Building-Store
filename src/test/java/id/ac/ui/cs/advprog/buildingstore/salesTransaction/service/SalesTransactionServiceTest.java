@@ -48,8 +48,8 @@ class SalesTransactionServiceTest {
         User cashier = User.builder().id(1).username("john").build();
         CustomerManagementModel customer = CustomerManagementModel.builder().id(812345678).build();
         List<SalesItemRequest> itemRequests = List.of(
-                new SalesItemRequest(null, 2, 10000),
-                new SalesItemRequest(null, 1, 20000)
+                new SalesItemRequest(null, null, 2, 10000),
+                new SalesItemRequest(null, null, 1, 20000)
         );
 
         SalesTransaction savedTx = SalesTransaction.builder()

@@ -6,8 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class SalesItemResponse {
-    private int id;
-    //private int productId;
+    private int productId;
     private int transactionId;
     private int quantity;
     private int price;

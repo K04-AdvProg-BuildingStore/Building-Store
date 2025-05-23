@@ -10,6 +10,8 @@ import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.service.SalesTransactionService;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerManagementRepository;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.repository.ProductManagementRepository;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,7 @@ public class SalesTransactionController {
     private final SalesTransactionService transactionService;
     private final UserRepository userRepository;
     private final CustomerManagementRepository customerRepository;
+    private final ProductManagementRepository productRepository;
 
     @GetMapping
     public ResponseEntity<List<SalesTransactionResponse>> getAllTransactions() {
@@ -73,14 +76,20 @@ public class SalesTransactionController {
         CustomerManagementModel customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
 
-        // Convert SalesItemRequest list to SalesItem list
+        // Convert SalesItemRequest list to SalesItem list, including product
         List<SalesItem> salesItems = (request.getItems() == null ? List.<id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest>of() : request.getItems())
-                .stream().map(itemReq ->
-                SalesItem.builder()
-                        .quantity(itemReq.getQuantity())
-                        .price(itemReq.getPrice())
-                        .build()
-        ).toList();
+                .stream().map(itemReq -> {
+                    ProductManagementModel product = null;
+                    if (itemReq.getProductId() != null) {
+                        product = productRepository.findById(itemReq.getProductId())
+                                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+                    }
+                    return SalesItem.builder()
+                            .product(product)
+                            .quantity(itemReq.getQuantity())
+                            .price(itemReq.getPrice())
+                            .build();
+                }).toList();
 
         SalesTransaction updated = transactionService.updateTransaction(
                 id,
@@ -106,7 +115,12 @@ public class SalesTransactionController {
                 .status(tx.getStatus())
                 .cashierUsername(tx.getCashier() != null ? tx.getCashier().getUsername() : null)
                 .items((tx.getItems() == null ? List.<SalesItem>of() : tx.getItems()).stream().map(item ->
-                        new SalesItemResponse(item.getId(), item.getTransaction().getId(), item.getQuantity(), item.getPrice())
+                        new SalesItemResponse(
+                                item.getProduct() != null ? item.getProduct().getId() : 0,
+                                item.getTransaction() != null ? item.getTransaction().getId() : 0,
+                                item.getQuantity(),
+                                item.getPrice()
+                        )
                 ).toList())
                 .build();
     }
