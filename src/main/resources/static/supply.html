@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #2196F3;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        button.cancel {
+            background-color: #f44336;
+        }
+        button.cancel:hover {
+            background-color: #d32f2f;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Supply Management</h1>
+
+    <div class="table-container">
+        <table id="supplyTable">
+            <thead>
+            <tr>
+                <th>Supplier</th>
+                <th>Product ID</th>
+                <th>Stock</th>
+                <th>Delivery Address</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="form-container">
+        <h2 id="formTitle">Add New Supply</h2>
+        <form id="supplyForm">
+            <input type="hidden" id="supplyId">
+            <div class="form-group">
+                <label for="supplierPhone">Supplier Phone:</label>
+                <input type="text" id="supplierPhone" required>
+            </div>
+            <div class="form-group">
+                <label for="productId">Product:</label>
+                <select id="productId" required>
+                    <option value="">Select a product</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="supplyStock">Stock:</label>
+                <input type="number" id="supplyStock" required>
+            </div>
+            <div class="form-group">
+                <label for="deliveryAddress">Delivery Address:</label>
+                <input type="text" id="deliveryAddress" required>
+            </div>
+            <div>
+                <button type="button" id="cancelEdit" class="cancel hidden">Cancel</button>
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const apiBase = '/api/supplies';
+    const productsApi = '/products'; // Endpoint to get all products
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function redirectLogin() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+        }
+    }
+
+    // Redirect if not logged in
+    redirectLogin();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProductIds();
+        loadSupplies();
+        document.getElementById('supplyForm').addEventListener('submit', onSubmit);
+        document.getElementById('cancelEdit').addEventListener('click', resetForm);
+    });
+
+    function loadProductIds() {
+        fetch(productsApi, {
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch product IDs');
+                return res.json();
+            })
+            .then(products => {
+                const select = document.getElementById('productId');
+                // Clear existing options except the first one
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+
+                // Add new options with product IDs
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name}`; // Display just the ID
+                    select.appendChild(option);
+                });
+            })
+            .catch(err => {
+                console.error('Error loading product IDs:', err);
+                alert('Failed to load product IDs. Please try again.');
+            });
+    }
+
+    function loadSupplies() {
+        fetch(apiBase, {
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch supplies');
+                return res.json();
+            })
+            .then(data => {
+                const tbody = document.querySelector('#supplyTable tbody');
+                tbody.innerHTML = '';
+                data.forEach(s => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                            <td>${s.supplier.name} (${s.supplier.phoneNumber})</td>
+                            <td>${s.product.id}</td>
+                            <td>${s.supplyStock}</td>
+                            <td>${s.deliveryAddress}</td>
+                            <td>
+                                <button onclick="editSupply(${s.id})">Edit</button>
+                                <button class="cancel" onclick="deleteSupply(${s.id})">Delete</button>
+                            </td>`;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => {
+                console.error('Error loading supplies:', err);
+                alert('Failed to load supplies. Please try again.');
+            });
+    }
+
+    function onSubmit(e) {
+        e.preventDefault();
+        const supplierPhone = document.getElementById('supplierPhone').value.trim();
+        const productId = parseInt(document.getElementById('productId').value);
+        const supplyStock = parseInt(document.getElementById('supplyStock').value);
+        const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+        const supplyId = document.getElementById('supplyId').value;
+
+        const payload = {
+            supplier: { phoneNumber: supplierPhone },
+            product: { id: productId },
+            supplyStock,
+            deliveryAddress
+        };
+
+        let method = 'POST', url = apiBase;
+        if (supplyId) {
+            method = 'PUT';
+            url += '/' + supplyId;
+        }
+
+        fetch(url, {
+            method,
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(res.status === 400 ? 'Invalid data' : 'Operation failed');
+                return res.json();
+            })
+            .then(() => {
+                resetForm();
+                loadSupplies();
+            })
+            .catch(err => {
+                console.error('Error submitting supply:', err);
+                alert(err.message);
+            });
+    }
+
+    function editSupply(id) {
+        fetch(apiBase + '/' + id, {
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Supply not found');
+                return res.json();
+            })
+            .then(s => {
+                document.getElementById('formTitle').textContent = 'Edit Supply';
+                document.getElementById('supplyId').value = s.id;
+                document.getElementById('supplierPhone').value = s.supplier.phoneNumber;
+                document.getElementById('productId').value = s.product.id;
+                document.getElementById('supplyStock').value = s.supplyStock;
+                document.getElementById('deliveryAddress').value = s.deliveryAddress;
+                document.getElementById('cancelEdit').classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error('Error editing supply:', err);
+                alert(err.message);
+            });
+    }
+
+    function deleteSupply(id) {
+        if (!confirm(`Are you sure you want to delete supply with ID ${id}?`)) return;
+
+        fetch(apiBase + '/' + id, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Delete failed');
+                loadSupplies();
+            })
+            .catch(err => {
+                console.error('Error deleting supply:', err);
+                alert(err.message);
+            });
+    }
+
+    function resetForm() {
+        document.getElementById('formTitle').textContent = 'Add New Supply';
+        document.getElementById('supplyId').value = '';
+        document.getElementById('supplyForm').reset();
+        document.getElementById('cancelEdit').classList.add('hidden');
+    }
+</script>
+</body>
+</html>
