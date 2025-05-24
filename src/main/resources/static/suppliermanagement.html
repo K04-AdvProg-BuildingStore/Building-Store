@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Management</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #d62828;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f5f5f5;
+        }
+        .action-btn {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+        .edit {
+            color: #f77f00;
+        }
+        .delete {
+            color: #d62828;
+        }
+        .form-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="checkbox"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            cursor: pointer;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        button.primary {
+            background-color: #f77f00;
+            color: white;
+        }
+        button.cancel {
+            background-color: #d62828;
+            color: white;
+        }
+        button.supply {
+            background-color: #f77f00;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .active-status {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .inactive-status {
+            color: #d62828;
+            font-weight: bold;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Supplier Management</h1>
+
+    <button class="supply" onclick="window.location.href='supply.html'">Go to Supply Management</button>
+
+    <div class="form-container">
+        <h2 id="formTitle">Add New Supplier</h2>
+        <form id="supplierForm">
+            <input type="hidden" id="originalPhone">
+            <div class="form-group">
+                <label for="name">Supplier Name:</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number:</label>
+                <input type="text" id="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" required>
+            </div>
+            <div class="form-group">
+                <label>Active Status:</label>
+                <label class="switch">
+                    <input type="checkbox" id="active">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div>
+                <button type="button" id="cancelEdit" class="cancel hidden">Cancel</button>
+                <button type="submit" class="primary">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table id="supplierTable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone Number</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const apiBase = '/suppliers';
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function redirectLogin() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+        }
+    }
+
+    // Redirect if not logged in
+    redirectLogin();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSuppliers();
+        document.getElementById('supplierForm').addEventListener('submit', onSubmit);
+        document.getElementById('cancelEdit').addEventListener('click', resetForm);
+    });
+
+    function loadSuppliers() {
+        fetch(apiBase, {
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch suppliers');
+                return res.json();
+            })
+            .then(data => {
+                const tbody = document.querySelector('#supplierTable tbody');
+                tbody.innerHTML = '';
+                data.forEach(s => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                            <td>${s.name}</td>
+                            <td>${s.phoneNumber}</td>
+                            <td>${s.address}</td>
+                            <td class="${s.active ? 'active-status' : 'inactive-status'}">
+                                ${s.active ? 'Active' : 'Inactive'}
+                            </td>
+                            <td>
+                                <button class="action-btn edit" onclick="editSupplier('${s.phoneNumber}')">✏️</button>
+                                ${!s.active ? `<button class="action-btn delete" onclick="deleteSupplier('${s.phoneNumber}')">🗑️</button>` : ''}
+                            </td>`;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => {
+                console.error('Error loading suppliers:', err);
+                alert('Failed to load suppliers. Please try again.');
+            });
+    }
+
+    function onSubmit(e) {
+        e.preventDefault();
+        const name = document.getElementById('name').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const address = document.getElementById('address').value.trim();
+        const active = document.getElementById('active').checked;
+        const original = document.getElementById('originalPhone').value;
+
+        const payload = { name, phoneNumber: phone, address, active };
+        let method = 'POST', url = apiBase;
+        if (original) {
+            method = 'PUT';
+            url += '/' + encodeURIComponent(original);
+        }
+
+        fetch(url, {
+            method,
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(res.status === 400 ? 'Invalid data' : 'Operation failed');
+                return res.json();
+            })
+            .then(() => {
+                resetForm();
+                loadSuppliers();
+            })
+            .catch(err => {
+                console.error('Error submitting supplier:', err);
+                alert(err.message);
+            });
+    }
+
+    function editSupplier(phone) {
+        fetch(apiBase + '/' + encodeURIComponent(phone), {
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Supplier not found');
+                return res.json();
+            })
+            .then(s => {
+                document.getElementById('formTitle').textContent = 'Edit Supplier';
+                document.getElementById('originalPhone').value = s.phoneNumber;
+                document.getElementById('name').value = s.name;
+                document.getElementById('phone').value = s.phoneNumber;
+                document.getElementById('address').value = s.address;
+                document.getElementById('active').checked = s.active;
+                document.getElementById('cancelEdit').classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error('Error editing supplier:', err);
+                alert(err.message);
+            });
+    }
+
+    function deleteSupplier(phone) {
+        if (!confirm(`Are you sure you want to delete supplier with phone ${phone}?`)) return;
+
+        fetch(apiBase + '/' + encodeURIComponent(phone), {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Delete failed');
+                loadSuppliers();
+            })
+            .catch(err => {
+                console.error('Error deleting supplier:', err);
+                alert(err.message);
+            });
+    }
+
+    function resetForm() {
+        document.getElementById('formTitle').textContent = 'Add New Supplier';
+        document.getElementById('originalPhone').value = '';
+        document.getElementById('supplierForm').reset();
+        document.getElementById('cancelEdit').classList.add('hidden');
+    }
+</script>
+</body>
+</html>
