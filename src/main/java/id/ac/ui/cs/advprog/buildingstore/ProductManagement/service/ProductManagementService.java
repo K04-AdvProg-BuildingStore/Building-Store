@@ -17,5 +17,7 @@ public interface ProductManagementService {
 
     List<ProductManagementModel> getAllProducts();
     List<ProductManagementModel> searchProductsByName(String name);
+    void setProductStock(Integer productId, Integer newQuantity);
+
 
 }
