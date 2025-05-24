@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -49,5 +50,9 @@ public class CustomerManagementService {
         }
 
         return null;
+    }
+
+    public List<CustomerManagementModel> getAllCustomers() {
+        return repository.findAll();
     }
 }

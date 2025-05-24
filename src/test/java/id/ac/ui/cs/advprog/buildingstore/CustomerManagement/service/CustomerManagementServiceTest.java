@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerM
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -224,6 +225,47 @@ public class CustomerManagementServiceTest {
         assertNotNull(updated);
         assertEquals(birthday, updated.getBirthday());
         verify(repository).save(existing);
+    }
+
+    @Test
+    void testGetAllCustomers() {
+        // Create test data
+        CustomerManagementModel customer1 = CustomerManagementModel.builder()
+                .phoneNumber("08123456789")
+                .name("Alice")
+                .build();
+                
+        CustomerManagementModel customer2 = CustomerManagementModel.builder()
+                .phoneNumber("08123456788")
+                .name("Bob")
+                .build();
+
+        // Set up mock repository behavior
+        when(repository.findAll()).thenReturn(List.of(customer1, customer2));
+
+        // Call the service method
+        List<CustomerManagementModel> result = service.getAllCustomers();
+
+        // Verify the results
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("Alice", result.get(0).getName());
+        assertEquals("Bob", result.get(1).getName());
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    void testGetAllCustomersEmptyList() {
+        // Set up mock repository to return empty list
+        when(repository.findAll()).thenReturn(List.of());
+
+        // Call the service method
+        List<CustomerManagementModel> result = service.getAllCustomers();
+
+        // Verify the results
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(repository, times(1)).findAll();
     }
 
 }
