@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo Controller</title>
+</head>
+<body>
+<h1>Demo Homepage</h1>
+<h2>Demo Controller Endpoint</h2>
+<button id="cashierBtn">Cashier Endpoint</button>
+<button id="adminBtn">Admin Endpoint</button>
+<button id="placeholder1">Placeholder 1</button>
+<button id="placeholder2">Placeholder 2</button>
+<button id="placeholder3">Placeholder 3</button>
+<button id="placeholder4">Placeholder 4</button>
+<button id="logoutBtn">Log Out</button>
+<div id="result"></div>
+<div>
+    <strong>JWT Token:</strong>
+    <pre id="jwtToken"></pre>
+</div>
+
+<script>
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function redirectLogin() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+        }
+    }
+
+    // Redirect if not logged in
+    redirectLogin();
+
+    // Print token
+    document.getElementById('jwtToken').textContent = localStorage.getItem('jwt') || 'Not logged in';
+
+    // Button event listeners
+    document.getElementById('cashierBtn').onclick = async function() {
+        try {
+            //here im gonna call the demo controller cashier endpoint and the auth headers i can just
+            //retrieve by calling getAuthHeaders()
+            const res = await fetch('/api/v1/demo-controller/cashier', {
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                document.getElementById('result').textContent = 'You are not a cashier';
+                return;
+            }
+            const text = await res.text();
+            document.getElementById('result').textContent = text;
+        } catch (e) {
+            document.getElementById('result').textContent = 'Network failure. Try again later.';
+        }
+    };
+
+    document.getElementById('adminBtn').onclick = async function() {
+        try {
+            const res = await fetch('/api/v1/demo-controller/admin', {
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) {
+                document.getElementById('result').textContent = 'You are not an admin';
+                return;
+            }
+            const text = await res.text();
+            document.getElementById('result').textContent = text;
+        } catch (e) {
+            document.getElementById('result').textContent = 'Network failure. Try again later.';
+        }
+    };
+
+    // Placeholders
+    document.getElementById('placeholder1').onclick = () => window.location.href = '#';
+    document.getElementById('placeholder2').onclick = () => window.location.href = '#';
+    document.getElementById('placeholder3').onclick = () => window.location.href = '#';
+    document.getElementById('placeholder4').onclick = () => window.location.href = '#';
+
+    // Logout
+    document.getElementById('logoutBtn').onclick = async function() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+            return;
+        }
+        await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+        localStorage.removeItem('jwt');
+        window.location.href = 'authenticate.html';
+    };
+</script>
+</body>
+</html>

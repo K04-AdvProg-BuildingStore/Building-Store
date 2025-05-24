@@ -23,7 +23,7 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO_NAME }}:latest
-
+          
       - name: Releasing New Version
         uses: appleboy/ssh-action@v1.2.0
         with:

@@ -1,0 +1,41 @@
+ok gang lemme run u thru this module:
+
+this part is specifically for zz:
+    - for now, this has no frontend and can only be tested with postman, here's the collection: https://flori-9340353.postman.co/workspace/Flori's-Workspace~6c5ea16a-3769-46ab-8a43-eab11d2d49fd/collection/43523089-dc97e87c-5d96-453e-932d-bc490c93f5e5?action=share&creator=43523089
+    - I used this yt vid as reference: https://www.youtube.com/watch?v=KxqlJblhzfI
+    - however, you're NOT going to find a lot related to user roles and permissions there.
+    - i have already implemented user roles (admin and user) in the database, enumerated 0 and 1.
+    - when you first register rn, u will by default be registered as a user (0), bc it's coded that way in service/AuthenticationService.
+    - the bro who made that youtube actually DID implement more on user roles and permissions, he just nvr made a vid abt it (not any that i could find at least)
+    - instead, he just put it in a github repository: https://github.com/ali-bouali/spring-boot-3-jwt-security with minimal documentation
+    - good luck
+
+TODO:
+    - implement user roles and permissions: zz
+    - implement logout: we'll think ab this later
+
+demo module:
+demo - this is just placeholder that directs u to an endpoint which says hello world, if ur alr authenticated.
+
+auth modules:
+config :
+    - application config: has basic services used throughout this module, like authmanager, userdetailsservice, password encoder, authprovider.
+    - jwt auth filter : this the part that actually determines if the user is logging in w the correct credentials or not.
+    - security configuration : is what actually implements jwt auth filter. also u can configure which pages can only be accessed by authenticated users. note: determining which pages can be accessed by certain user roles is not done in here (i think).
+
+controller :
+    - authcontroller : specifies endpoints for the authentication module, prefixed /api/v1/auth/
+    - authrequest : determines what u should fill in postman to put a post request for /api/v1/auth/authenticate
+    - authresponse : determines what postman is supposed to give u back on a successful authrequest or registerrequest. (its supposed to show u ur jwt token)
+    - registerrequest:     determines what u should fill in postman to put a post request for /api/v1/auth/register
+
+model :
+    - role: enumerated roles for user model, 0 - user, 1 - admin, maybe we can pretend 0 is cashier in our heads guys
+    - user : specifies the fields that the _user table should have in our database. yeah, i renamed the database user table as _user to prevent naming-related bugs
+
+repository :
+    - user repository: allows u to find by username
+
+service :
+    - auth service : actually specifies what the authenticate and register endpoints do in authcontroller.
+    - jwt service : checks token expiry and validity, can extract claims from token and generate new tokens
