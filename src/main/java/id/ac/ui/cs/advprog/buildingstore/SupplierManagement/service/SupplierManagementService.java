@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplierManagementModel;
@@ -23,6 +24,10 @@ public class SupplierManagementService {
 
     public Optional<SupplierManagementModel> getSupplierByPhone(String phoneNumber) {
         return repository.findByPhoneNumber(phoneNumber);
+    }
+
+    public List<SupplierManagementModel> getAllSuppliers() {
+        return repository.findAll();
     }
 
     public void deleteSupplierByPhone(String phoneNumber) {

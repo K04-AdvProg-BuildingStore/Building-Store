@@ -1,5 +1,8 @@
 package id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service;
 
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.repository.ProductManagementRepository;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.service.ProductManagementService;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplyModel;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplierManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.repository.SupplyRepository;
@@ -41,12 +44,28 @@ public class SupplyService {
         return supplyRepo.findByProductId(productId);
     }
 
+    @Autowired
+    private ProductManagementService productService; // Inject your service
+
+    @Autowired
+    private ProductManagementRepository productRepo; // Optional if service already fetches
+
     public SupplyModel createSupply(SupplyModel supply) {
         SupplierManagementModel sup = supplierService
                 .getSupplierByPhone(supply.getSupplier().getPhoneNumber())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Supplier not found"));
+
+        ProductManagementModel product = productRepo.findById(supply.getProduct().getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Product not found"));
+
+       // productService.setProductStock(product.getId(), supply.getSupplyStock());
+
+
         supply.setSupplier(sup);
+        supply.setProduct(product); // prevents nulls in response JSON
+
         return supplyRepo.save(supply);
     }
 

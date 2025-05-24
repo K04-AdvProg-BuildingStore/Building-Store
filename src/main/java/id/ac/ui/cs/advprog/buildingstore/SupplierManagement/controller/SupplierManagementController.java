@@ -5,6 +5,7 @@ import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service.SupplierMana
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -14,6 +15,12 @@ public class SupplierManagementController {
 
     public SupplierManagementController(SupplierManagementService service) {
         this.service = service;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<SupplierManagementModel>> getAllSuppliers() {
+        List<SupplierManagementModel> suppliers = service.getAllSuppliers();
+        return ResponseEntity.ok(suppliers);
     }
 
     @PostMapping
