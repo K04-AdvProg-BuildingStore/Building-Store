@@ -13,9 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import id.ac.ui.cs.advprog.buildingstore.payment.model.Payment;
 import id.ac.ui.cs.advprog.buildingstore.payment.repository.PaymentRepository;
-import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -23,11 +20,16 @@ public class PaymentServiceImpl implements PaymentService {
     private final Logger log = LoggerFactory.getLogger(PaymentServiceImpl.class);
     private final PaymentRepository paymentRepository;
     private final List<PaymentStrategy> paymentStrategies;
+    private final PaymentMetricService metricService;
 
     @Autowired
-    public PaymentServiceImpl(PaymentRepository paymentRepository, List<PaymentStrategy> paymentStrategies) {
+    public PaymentServiceImpl(
+            PaymentRepository paymentRepository,
+            List<PaymentStrategy> paymentStrategies,
+            PaymentMetricService metricService) {
         this.paymentRepository = paymentRepository;
         this.paymentStrategies = paymentStrategies;
+        this.metricService = metricService;
     }
 
     @Override
@@ -87,6 +89,8 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.getAmount(),
                 payment.getMethod(),
                 payment.getStatus());
+
+        metricService.recordPaymentAttempt(payment);
     }
 
     @Override
@@ -111,5 +115,7 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Payment completed: {} with status: {}",
                 payment.getId(),
                 payment.getStatus());
+
+        metricService.recordSuccessfulPayment(payment);
     }
 }
