@@ -23,6 +23,12 @@
             color: #333;
             text-align: center;
         }
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -78,11 +84,17 @@
             box-sizing: border-box;
         }
         button {
+            padding: 8px 15px;
             cursor: pointer;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
             margin-right: 10px;
+            border-radius: 20px; /* Rounded rectangular shape */
+            border: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
         button.primary {
             background-color: #f77f00;
@@ -95,7 +107,10 @@
         button.supply {
             background-color: #f77f00;
             color: white;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 20px; /* Matching rounded rectangular shape */
         }
         .hidden {
             display: none;
@@ -151,9 +166,10 @@
 </head>
 <body>
 <div class="container">
-    <h1>Supplier Management</h1>
-
-    <button class="supply" onclick="window.location.href='supply.html'">Go to Supply Management</button>
+    <div class="header-container">
+        <h1>Supplier Management</h1>
+        <button class="supply" onclick="window.location.href='supply.html'">Go to Supply Management</button>
+    </div>
 
     <div class="form-container">
         <h2 id="formTitle">Add New Supplier</h2>

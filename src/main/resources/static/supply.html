@@ -6,46 +6,60 @@
     <title>Supply Management</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
+            font-family: sans-serif;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f9f9f9;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         h1 {
+            margin-bottom: 20px;
             text-align: center;
-            color: #333;
+        }
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            background: white;
+            margin-top: 20px;
         }
         th, td {
-            padding: 12px;
+            padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
         th {
-            background-color: #2196F3;
+            background-color: #d62828;
             color: white;
         }
-        tr:hover {
+        tr:nth-child(even) {
             background-color: #f5f5f5;
         }
+        .action-btn {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+        .edit {
+            color: #f77f00;
+        }
+        .delete {
+            color: #d62828;
+        }
         .form-container {
-            margin-top: 30px;
+            background-color: white;
             padding: 20px;
-            border: 1px solid #ddd;
             border-radius: 5px;
-            background-color: #f9f9f9;
+            margin-bottom: 20px;
         }
         .form-group {
             margin-bottom: 15px;
@@ -65,22 +79,31 @@
             box-sizing: border-box;
         }
         button {
-            background-color: #2196F3;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
+            padding: 8px 15px;
             cursor: pointer;
             margin-right: 10px;
+            border-radius: 20px;
+            border: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
         }
         button:hover {
-            background-color: #0b7dda;
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        button.primary {
+            background-color: #f77f00;
+            color: white;
         }
         button.cancel {
-            background-color: #f44336;
+            background-color: #d62828;
+            color: white;
         }
-        button.cancel:hover {
-            background-color: #d32f2f;
+        button.supplier-btn {
+            background-color: #f77f00; /* Changed to match submit button color */
+            color: white;
+            margin-top: 10px;
+            padding: 10px 20px;
         }
         .hidden {
             display: none;
@@ -89,21 +112,9 @@
 </head>
 <body>
 <div class="container">
-    <h1>Supply Management</h1>
-
-    <div class="table-container">
-        <table id="supplyTable">
-            <thead>
-            <tr>
-                <th>Supplier</th>
-                <th>Product ID</th>
-                <th>Stock</th>
-                <th>Delivery Address</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="header-container">
+        <h1>Supply Management</h1>
+        <button class="supplier-btn" onclick="window.location.href='suppliermanagement.html'">Go to Supplier Management</button>
     </div>
 
     <div class="form-container">
@@ -131,15 +142,30 @@
             </div>
             <div>
                 <button type="button" id="cancelEdit" class="cancel hidden">Cancel</button>
-                <button type="submit">Submit</button>
+                <button type="submit" class="primary">Submit</button>
             </div>
         </form>
+    </div>
+
+    <div class="table-container">
+        <table id="supplyTable">
+            <thead>
+            <tr>
+                <th>Supplier</th>
+                <th>Product ID</th>
+                <th>Stock</th>
+                <th>Delivery Address</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 
 <script>
     const apiBase = '/api/supplies';
-    const productsApi = '/products'; // Endpoint to get all products
+    const productsApi = '/products';
 
     function getAuthHeaders() {
         const token = localStorage.getItem('jwt');
@@ -156,7 +182,6 @@
         }
     }
 
-    // Redirect if not logged in
     redirectLogin();
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -176,16 +201,14 @@
             })
             .then(products => {
                 const select = document.getElementById('productId');
-                // Clear existing options except the first one
                 while (select.options.length > 1) {
                     select.remove(1);
                 }
 
-                // Add new options with product IDs
                 products.forEach(product => {
                     const option = document.createElement('option');
                     option.value = product.id;
-                    option.textContent = `${product.name}`; // Display just the ID
+                    option.textContent = `${product.name}`;
                     select.appendChild(option);
                 });
             })
@@ -214,8 +237,8 @@
                             <td>${s.supplyStock}</td>
                             <td>${s.deliveryAddress}</td>
                             <td>
-                                <button onclick="editSupply(${s.id})">Edit</button>
-                                <button class="cancel" onclick="deleteSupply(${s.id})">Delete</button>
+                                <button class="action-btn edit" onclick="editSupply(${s.id})">✏️</button>
+                                <button class="action-btn delete" onclick="deleteSupply(${s.id})">🗑️</button>
                             </td>`;
                     tbody.appendChild(tr);
                 });
