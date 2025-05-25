@@ -30,6 +30,7 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/authenticate",
                                 "/*.html",
                                 "/css/**",
+                                "/actuator/prometheus",
                                 "/js/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/auth/logout").authenticated()
