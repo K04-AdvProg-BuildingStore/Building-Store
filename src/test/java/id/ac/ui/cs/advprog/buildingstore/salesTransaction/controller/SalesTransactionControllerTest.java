@@ -3,10 +3,12 @@ package id.ac.ui.cs.advprog.buildingstore.salesTransaction.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
-import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesTransactionCreateRequest;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.service.SalesTransactionService;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerManagementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -27,75 +28,73 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class SalesTransactionControllerTest {
-
     private MockMvc mockMvc;
-
     private ObjectMapper objectMapper = new ObjectMapper();
-
     @Mock
     private SalesTransactionService transactionService;
-
     @Mock
     private UserRepository userRepository;
-
+    @Mock
+    private CustomerManagementRepository customerRepository;
     @InjectMocks
-    private SalesTransactionController salesTransactionController;
-
+    private SalesTransactionController controller;
     private SalesTransactionCreateRequest request;
     private User mockCashier;
+    private CustomerManagementModel mockCustomer;
     private SalesTransaction mockTransaction;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(salesTransactionController).build();
-
-        SalesItemRequest item1 = new SalesItemRequest(null, 2, 100000);
-        SalesItemRequest item2 = new SalesItemRequest(null, 1, 200000);
-        request = new SalesTransactionCreateRequest(9952, 816998556, "CANCELLED", List.of(item1, item2));
-
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         mockCashier = new User();
+        mockCashier.setId(9952);
+        mockCustomer = CustomerManagementModel.builder().id(816998556).build();
+        request = SalesTransactionCreateRequest.builder()
+                .cashierId(9952)
+                .customerId(816998556)
+                .status(TransactionStatus.PENDING)
+                .items(null)
+                .build();
         mockTransaction = SalesTransaction.builder()
                 .id(1)
                 .cashier(mockCashier)
-                .customerPhone(816998556)
-                .status("CANCELLED")
-                .items(List.of())
+                .customer(mockCustomer)
+                .status(TransactionStatus.PENDING)
+                .items(null)
                 .build();
     }
 
     @Test
-    void testCreateTransaction() throws Exception {
+    void testCreateRequest() throws Exception {
         when(userRepository.findById(9952)).thenReturn(Optional.of(mockCashier));
-        when(transactionService.createTransaction(mockCashier, 816998556, "CANCELLED", request.getItems()))
-                .thenReturn(mockTransaction);
-
+        when(customerRepository.findById(816998556)).thenReturn(Optional.of(mockCustomer));
+        when(transactionService.createTransaction(eq(mockCashier), eq(mockCustomer), eq(TransactionStatus.PENDING), any())).thenReturn(mockTransaction);
         mockMvc.perform(post("/api/sales-transactions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.customerPhone").value(816998556));
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.customerId").value(816998556));
     }
 
     @Test
-    void testUpdateTransaction() throws Exception {
+    void testUpdateRequest() throws Exception {
         when(userRepository.findById(9952)).thenReturn(Optional.of(mockCashier));
-        when(transactionService.updateTransaction(eq(1), eq(mockCashier), eq(816998556), eq("CANCELLED"), anyList()))
-                .thenReturn(mockTransaction);
-
+        when(customerRepository.findById(816998556)).thenReturn(Optional.of(mockCustomer));
+        when(transactionService.updateTransaction(eq(1), eq(mockCashier), eq(mockCustomer), eq(TransactionStatus.PENDING), any())).thenReturn(mockTransaction);
         mockMvc.perform(put("/api/sales-transactions/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.customerPhone").value(816998556));
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.customerId").value(816998556));
     }
 
     @Test
-    void testDeleteTransaction() throws Exception {
+    void testDeleteRequest() throws Exception {
         doNothing().when(transactionService).deleteTransaction(1);
-
         mockMvc.perform(delete("/api/sales-transactions/1"))
                 .andExpect(status().isNoContent());
     }
 }
+

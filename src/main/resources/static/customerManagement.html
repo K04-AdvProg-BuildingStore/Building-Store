@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Management</title>
+    <!-- Add Font Awesome for proper icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background-color: white;
+        }
+        .content {
+            width: 100%;
+        }
+        .header {
+            height: 70px;
+            border-bottom: 1px solid #DDDDDD;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 30px;
+        }
+        .logout {
+            color: rgba(141.39, 141.39, 141.39, 0.87);
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            word-wrap: break-word;
+            cursor: pointer;
+        }
+        .page-title {
+            margin: 40px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title {
+            color: #3C3C3C;
+            font-size: 24px;
+            font-family: Poppins;
+            font-weight: 600;
+            word-wrap: break-word;
+        }
+        .search-bar {
+            width: 267px;
+            height: 40px;
+            background: #DDDDDD;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+        }
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            margin-left: 10px;
+            width: 100%;
+            color: #3C3C3C;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 400;
+            word-wrap: break-word;
+            padding-right: 15px;
+        }
+        .add-button {
+            width: 117px;
+            height: 40px;
+            background: #C30813;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+        .add-button-text {
+            color: white;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+        .add-button-plus {
+            color: white;
+            font-size: 18px;
+            font-family: Poppins;
+            font-weight: 600;
+            word-wrap: break-word;
+            margin-right: 5px;
+        }
+        .table-container {
+            margin: 0 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead tr {
+            background-color: #DDDDDD;
+            height: 54px;
+        }
+        th {
+            color: #3C3C3C;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            text-transform: uppercase;
+            word-wrap: break-word;
+            text-align: left;
+            padding: 0 15px;
+        }
+        tbody tr {
+            height: 53px;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #DDDDDD;
+        }
+        td {
+            color: #3C3C3C;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            word-wrap: break-word;
+            padding: 0 15px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .action-button {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: transform 0.2s;
+        }
+        
+        .action-button:hover {
+            transform: scale(1.2);
+        }
+        
+        .edit-icon {
+            color: #2454FF;
+            font-size: 16px;
+        }
+        
+        .delete-icon {
+            color: #FD3535;
+            font-size: 16px;
+        }
+
+        .history-icon {
+            color: #BF5300;
+            font-size: 16px;
+        }
+        
+        .search-icon {
+            color: #3C3C3C;
+        }
+        
+        .clear-search {
+            background: none;
+            border: none;
+            color: #3C3C3C;
+            cursor: pointer;
+            margin-right: 10px;
+            display: none;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #3C3C3C;
+            font-size: 16px;
+            font-family: Poppins;
+            font-weight: 500;
+        }
+        
+        .status-toggle {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .status-active {
+            color: #28a745;
+        }
+        
+        .status-inactive {
+            color: #dc3545;
+        }
+        
+        .status-toggle:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="header">
+            <div class="logout" id="logoutBtn">Log out</div>
+        </div>
+        <div class="page-title">
+            <div class="title">Customers</div>
+            <div style="display: flex; align-items: center;">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search by phone..." />
+                    <button class="clear-search" id="clearSearch"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="add-button" id="addCustomerBtn">
+                    <span class="add-button-plus">+</span>
+                    <span class="add-button-text">Customer</span>
+                </div>
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Phone Number</th>
+                        <th>Email</th>
+                        <th>Gender</th>
+                        <th>Birthday</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    <tr>
+                        <td colspan="8" class="no-data">Loading customers...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Check for authentication
+        function redirectLogin() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
+            }
+        }
+
+        // Redirect if not logged in
+        redirectLogin();
+
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            const token = localStorage.getItem('jwt');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        // Fetch all customers
+        async function fetchAllCustomers() {
+            try {
+                console.log('Attempting to fetch all customers...');
+                const response = await fetch('/customers/all', {
+                    headers: getAuthHeaders()
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const customers = await response.json();
+                    console.log('Customers retrieved:', customers);
+                    displayCustomers(customers);
+                } else if (response.status === 404) {
+                    console.error('Endpoint /customers/all not found');
+                    displayNoData('Endpoint not available. Try searching for a specific customer.');
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to fetch customers:', response.status, errorText);
+                    displayNoData(`Failed to fetch customers. Server returned: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error in fetchAllCustomers:', error);
+                displayNoData(`Error loading customers: ${error.message}`);
+            }
+        }
+
+        // Fallback method to get all customers (simulate getting all if no endpoint exists)
+        async function fetchListOfCustomers() {
+            displayNoData('Use the search box to find customers by phone number');
+        }
+
+        // Fetch a specific customer by phone number
+        async function fetchCustomerByPhone(phoneNumber) {
+            try {
+                console.log(`Attempting to fetch customer with phone: ${phoneNumber}`);
+                const response = await fetch(`/customers/${phoneNumber}`, {
+                    headers: getAuthHeaders()
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const customer = await response.json();
+                    console.log('Customer retrieved:', customer);
+                    displayCustomers([customer]);
+                    document.getElementById('clearSearch').style.display = 'inline';
+                } else if (response.status === 404) {
+                    displayNoData(`No customer found with phone number: ${phoneNumber}`);
+                } else {
+                    const errorText = await response.text();
+                    console.error(`Error fetching ${phoneNumber}:`, response.status, errorText);
+                    displayNoData(`Error: ${response.status} when searching for customer`);
+                }
+            } catch (error) {
+                console.error('Error in fetchCustomerByPhone:', error);
+                displayNoData(`Error searching for customer: ${error.message}`);
+            }
+        }
+
+        // Display customers in the table
+        function displayCustomers(customers) {
+            const tableBody = document.getElementById('customerTableBody');
+            tableBody.innerHTML = '';
+
+            if (!customers || customers.length === 0) {
+                displayNoData('No customers found');
+                return;
+            }
+
+            console.log('Processing customers for display:', customers);
+
+            customers.forEach(customer => {
+                // Debug log to check the isActive property
+                console.log(`Customer ${customer.phoneNumber} - isActive:`, customer.isActive);
+                
+                const row = document.createElement('tr');
+                
+                const birthday = customer.birthday ? new Date(customer.birthday).toLocaleDateString() : 'N/A';
+                
+                // More robust status detection - check both camelCase and regular case
+                let status;
+                let isActive;
+                if (customer.hasOwnProperty('isActive')) {
+                    isActive = customer.isActive;
+                    status = isActive ? 'Active' : 'Inactive';
+                } else if (customer.hasOwnProperty('active')) {
+                    isActive = customer.active;
+                    status = isActive ? 'Active' : 'Inactive';
+                } else {
+                    isActive = false;
+                    status = 'Unknown';
+                }
+                
+                row.innerHTML = `
+                    <td>${customer.id || 'N/A'}</td>
+                    <td>${customer.name || 'N/A'}</td>
+                    <td>${customer.phoneNumber || 'N/A'}</td>
+                    <td>${customer.email || 'N/A'}</td>
+                    <td>${customer.gender || 'N/A'}</td>
+                    <td>${birthday}</td>
+                    <td>
+                        <span class="status-toggle ${isActive ? 'status-active' : 'status-inactive'}" 
+                              onclick="toggleCustomerStatus('${customer.phoneNumber}', ${!isActive})">
+                            ${status}
+                            <i class="fa-solid fa-rotate ms-1" style="font-size: 12px; margin-left: 5px;"></i>
+                        </span>
+                    </td>
+                    <td class="action-buttons">
+                        <div class="action-button" onclick="viewPurchaseHistory('${customer.phoneNumber}')">
+                            <i class="fa-solid fa-clock-rotate-left history-icon"></i>
+                        </div>
+                        <div class="action-button" onclick="editCustomer('${customer.phoneNumber}')">
+                            <i class="fa-solid fa-pen-to-square edit-icon"></i>
+                        </div>
+                        <div class="action-button" onclick="deleteCustomer('${customer.phoneNumber}')">
+                            <i class="fa-solid fa-trash delete-icon"></i>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Display a message when no data is available
+        function displayNoData(message) {
+            const tableBody = document.getElementById('customerTableBody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="no-data">${message}</td>
+                </tr>
+            `;
+        }
+
+        // Delete a customer
+        async function deleteCustomer(phoneNumber) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                try {
+                    const response = await fetch(`/customers/${phoneNumber}`, {
+                        method: 'DELETE',
+                        headers: getAuthHeaders()
+                    });
+
+                    if (response.ok) {
+                        // If search is active, refresh the search results
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput.value.trim()) {
+                            fetchCustomerByPhone(searchInput.value.trim());
+                        } else {
+                            fetchAllCustomers(); // Refresh the list
+                        }
+                        alert('Customer deleted successfully');
+                    } else {
+                        alert('Failed to delete customer');
+                    }
+                } catch (error) {
+                    console.error('Error deleting customer:', error);
+                    alert('Error deleting customer. Please try again.');
+                }
+            }
+        }
+
+        // Edit customer
+        function editCustomer(phoneNumber) {
+            window.location.href = `editCustomer.html?phone=${phoneNumber}`;
+        }
+
+        // View purchase history
+        function viewPurchaseHistory(phoneNumber) {
+            window.location.href = `purchaseHistory.html?phone=${phoneNumber}`;
+        }
+
+        // Add new customer
+        document.getElementById('addCustomerBtn').addEventListener('click', function() {
+            window.location.href = 'addCustomer.html';
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchValue = this.value.trim();
+                if (searchValue) {
+                    fetchCustomerByPhone(searchValue);
+                } else {
+                    fetchAllCustomers();
+                    document.getElementById('clearSearch').style.display = 'none';
+                }
+            }
+        });
+
+        // Clear search
+        document.getElementById('clearSearch').addEventListener('click', function() {
+            document.getElementById('searchInput').value = '';
+            this.style.display = 'none';
+            fetchAllCustomers();
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
+                return;
+            }
+            await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            localStorage.removeItem('jwt');
+            window.location.href = 'authenticate.html';
+        });
+
+        // Toggle customer status
+        async function toggleCustomerStatus(phoneNumber, newStatus) {
+            try {
+                const response = await fetch(`/customers/${phoneNumber}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    const customer = await response.json();
+                    
+                    // Update only the status field
+                    const updateData = {
+                        phoneNumber: phoneNumber,
+                        name: customer.name,
+                        isActive: newStatus
+                    };
+                    
+                    const updateResponse = await fetch(`/customers/${phoneNumber}`, {
+                        method: 'PUT',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(updateData)
+                    });
+                    
+                    if (updateResponse.ok) {
+                        // Refresh the current view
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput.value.trim()) {
+                            fetchCustomerByPhone(searchInput.value.trim());
+                        } else {
+                            fetchAllCustomers();
+                        }
+                    } else {
+                        alert('Failed to update customer status');
+                    }
+                } else {
+                    alert('Failed to fetch customer data');
+                }
+            } catch (error) {
+                console.error('Error toggling customer status:', error);
+                alert('Error updating customer status. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

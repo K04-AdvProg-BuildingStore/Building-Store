@@ -1,0 +1,272 @@
+<!-- update-transaction.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Sales Transaction</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        form { max-width: 600px; margin: 40px auto; }
+        label { display: block; margin-top: 12px; }
+        input, select { width: 100%; padding: 8px; margin-top: 4px; }
+        button { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #f4f4f4; }
+        .actions button { margin: 0 2px; }
+        .modal {
+            display: none; position: fixed; z-index: 1; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background: #fff; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 400px;
+        }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h2>Update Sales Transaction</h2>
+<div id="errorMessage" style="color: red; display: none; margin-bottom: 12px;"></div>
+<form id="updateForm">
+    <label>Customer ID
+        <input type="number" name="customerId" required>
+    </label>
+    <label>Cashier ID
+        <input type="number" name="cashierId" required>
+    </label>
+    <label>Status
+        <select name="status" required>
+            <option value="0">PENDING</option>
+            <option value="1">PAID</option>
+        </select>
+    </label>
+    <h3>Sales Items</h3>
+    <table id="itemsTable">
+        <thead>
+        <tr>
+            <th>Product ID</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th class="actions">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Sales items will be rendered here -->
+        </tbody>
+    </table>
+    <button type="button" onclick="openModal()">Add Item</button>
+    <button type="submit">Update</button>
+</form>
+
+<!-- Modal for adding/editing sales item -->
+<div id="itemModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h4 id="modalTitle">Add Item</h4>
+        <form id="itemForm" onsubmit="saveItem(event)">
+            <input type="hidden" name="editIndex" value="">
+            <label>Product ID
+                <input type="number" name="productId" required>
+            </label>
+            <label>Quantity
+                <input type="number" name="quantity" min="1" required>
+            </label>
+            <div>
+                <strong>Price: </strong>
+                <span id="calculatedPrice">-</span>
+            </div>
+            <button type="submit" id="itemSaveBtn">Add Item</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    let items = [];
+    let currentProductPrice = 0;
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    async function fetchProductPrice(productId) {
+        if (!productId) return 0;
+        try {
+            const res = await fetch(`/products/${productId}`, {
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) return 0;
+            const product = await res.json();
+            return product && product.price != null ? product.price : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    async function updateCalculatedPrice() {
+        const form = document.getElementById('itemForm');
+        const productId = form.productId.value;
+        const quantity = form.quantity.value;
+        const priceSpan = document.getElementById('calculatedPrice');
+        if (!productId || !quantity) {
+            priceSpan.textContent = '-';
+            currentProductPrice = 0;
+            return;
+        }
+        const productPrice = await fetchProductPrice(productId);
+        currentProductPrice = productPrice;
+        if (productPrice > 0) {
+            const total = productPrice * quantity;
+            priceSpan.textContent = total;
+        } else {
+            priceSpan.textContent = '-';
+        }
+    }
+
+    function renderItems() {
+        const tbody = document.getElementById('itemsTable').querySelector('tbody');
+        tbody.innerHTML = '';
+        items.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.productId}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price}</td>
+                <td class="actions">
+                    <button type="button" onclick="editItem(${idx})">Edit</button>
+                    <button type="button" onclick="deleteItem(${idx})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openModal(editIdx = null) {
+        const modal = document.getElementById('itemModal');
+        const form = document.getElementById('itemForm');
+        form.reset();
+        form.editIndex.value = '';
+        document.getElementById('modalTitle').textContent = 'Add Item';
+        document.getElementById('itemSaveBtn').textContent = 'Add Item';
+        document.getElementById('calculatedPrice').textContent = '-';
+        currentProductPrice = 0;
+        if (editIdx !== null) {
+            form.editIndex.value = editIdx;
+            form.productId.value = items[editIdx].productId;
+            form.quantity.value = items[editIdx].quantity;
+            document.getElementById('modalTitle').textContent = 'Edit Item';
+            document.getElementById('itemSaveBtn').textContent = 'Update Item';
+            updateCalculatedPrice();
+        }
+        modal.style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('itemModal').style.display = 'none';
+    }
+
+    async function saveItem(e) {
+        e.preventDefault();
+        const form = e.target;
+        const productId = parseInt(form.productId.value);
+        const quantity = parseInt(form.quantity.value);
+
+        // Always fetch the latest price before saving
+        const productPrice = await fetchProductPrice(productId);
+        const price = productPrice * quantity;
+        const item = { productId, quantity, price };
+        const idx = form.editIndex.value;
+        if (idx === '') {
+            items.push(item);
+        } else {
+            items[idx] = item;
+        }
+        closeModal();
+        renderItems();
+    }
+
+    function editItem(idx) {
+        openModal(idx);
+    }
+
+    function deleteItem(idx) {
+        items.splice(idx, 1);
+        renderItems();
+    }
+
+    async function loadTransaction() {
+        const res = await fetch(`/api/sales-transactions/${id}`, {
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) return;
+        const tx = await res.json();
+        document.querySelector('[name="customerId"]').value = tx.customerId;
+        document.querySelector('[name="cashierId"]').value = tx.cashierId || '';
+        document.querySelector('[name="status"]').value = tx.status === "PENDING" ? 0 : 1;
+        items = tx.items || [];
+        renderItems();
+    }
+
+    document.getElementById('itemForm').productId.addEventListener('change', updateCalculatedPrice);
+    document.getElementById('itemForm').quantity.addEventListener('input', updateCalculatedPrice);
+
+    document.getElementById('updateForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+
+        if (items.length === 0) {
+            errorDiv.textContent = 'Please add at least one sales item.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const data = {
+            customerId: parseInt(this.customerId.value),
+            cashierId: parseInt(this.cashierId.value),
+            status: parseInt(this.status.value),
+            items: items
+        };
+
+        try {
+            const res = await fetch(`/api/sales-transactions/${id}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+                const resBody = await res.json().catch(() => ({}));
+                errorDiv.textContent = resBody.error || `Error ${res.status}: Failed to update transaction.`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            window.location.href = 'sales-transactions.html';
+        } catch (err) {
+            errorDiv.textContent = 'Network error.';
+            errorDiv.style.display = 'block';
+        }
+    };
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('itemModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+
+    window.editItem = editItem;
+    window.deleteItem = deleteItem;
+    window.openModal = openModal;
+
+    loadTransaction();
+</script>
+</body>
+</html>

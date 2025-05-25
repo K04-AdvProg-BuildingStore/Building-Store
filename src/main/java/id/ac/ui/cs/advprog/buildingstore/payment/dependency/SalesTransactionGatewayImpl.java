@@ -1,7 +1,5 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.dependency;
 
-// Update these imports to match your actual package structure
-import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.service.SalesTransactionService;
@@ -62,7 +60,7 @@ public class SalesTransactionGatewayImpl implements SalesTransactionGateway {
                 salesTransactionService.updateTransaction(
                     salesTransactionId,
                     transaction.getCashier(),
-                    transaction.getCustomerPhone(),
+                    transaction.getCustomer(),
                     status,
                     transaction.getItems()
                 );

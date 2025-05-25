@@ -24,18 +24,18 @@ public class PurchaseHistoryService {
         }
         return repository.save(purchase);
     }
-
-    public List<PurchaseHistoryViewDTO> getCustomerPurchaseHistory(String phoneNumber) {
-        List<Object[]> rawList = repository.findFullCustomerPurchaseHistoryRaw(phoneNumber);
+    
+    public List<PurchaseHistoryViewDTO> getCustomerPurchaseHistoryById(Integer customerId) {
+        List<Object[]> rawList = repository.findFullCustomerPurchaseHistoryByIdRaw(customerId);
         return rawList.stream()
             .map(row -> new PurchaseHistoryViewDTOImpl(
-                (String) row[0],
+                row[0] != null ? ((Number) row[0]).intValue() : null, // customerId
                 (String) row[1],
-                row[2] != null ? ((Number) row[2]).intValue() : null,
-                row[3] != null ? ((Number) row[3]).intValue() : null, // status as Integer
-                row[4] != null ? ((Number) row[4]).intValue() : null, // productId as Integer
-                row[5] != null ? ((Number) row[5]).intValue() : null,
-                row[6] != null ? ((Number) row[6]).doubleValue() : null
+                (String) row[2],
+                row[3] != null ? ((Number) row[3]).intValue() : null, // transactionId
+                row[4] != null ? ((Number) row[4]).intValue() : null, // productId
+                row[5] != null ? ((Number) row[5]).intValue() : null, // quantity
+                row[6] != null ? ((Number) row[6]).doubleValue() : null // price
             ))
             .collect(Collectors.toList());
     }

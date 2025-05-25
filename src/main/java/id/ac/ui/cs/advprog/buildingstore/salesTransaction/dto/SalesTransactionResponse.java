@@ -10,9 +10,9 @@ import java.util.List;
 @Builder
 public class SalesTransactionResponse {
     private Integer id;
-    private Integer customerPhone;
+    private Integer customerId;
+    private Integer cashierId;
     private TransactionStatus status;
     private String cashierUsername;
     private List<SalesItemResponse> items;
-
 }

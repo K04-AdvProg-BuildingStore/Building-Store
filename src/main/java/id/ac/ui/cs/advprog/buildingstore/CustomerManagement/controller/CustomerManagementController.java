@@ -1,5 +1,6 @@
 package id.ac.ui.cs.advprog.buildingstore.CustomerManagement.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class CustomerManagementController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
+
     public ResponseEntity<CustomerManagementModel> addCustomer(@RequestBody CustomerManagementModel customer) {
         CustomerManagementModel result = service.addCustomer(customer);
         if (result == null) {
@@ -37,8 +38,14 @@ public class CustomerManagementController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<CustomerManagementModel>> getAllCustomers() {
+        List<CustomerManagementModel> customers = service.getAllCustomers();
+        return ResponseEntity.ok(customers);
+    }
+
     @GetMapping("/{phoneNumber}")
-    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
+   
     public ResponseEntity<CustomerManagementModel> getCustomer(@PathVariable String phoneNumber) {
         Optional<CustomerManagementModel> result = service.getCustomerByPhone(phoneNumber);
         return result.map(ResponseEntity::ok)
@@ -46,7 +53,6 @@ public class CustomerManagementController {
     }
 
     @PutMapping("/{phoneNumber}")
-    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<CustomerManagementModel> updateCustomer(
             @PathVariable String phoneNumber,
             @RequestBody CustomerManagementModel updatedFields) {
@@ -67,7 +73,6 @@ public class CustomerManagementController {
     }
 
     @DeleteMapping("/{phoneNumber}")
-    @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
     public ResponseEntity<Void> deleteCustomer(@PathVariable String phoneNumber) {
         service.deleteCustomerByPhone(phoneNumber);
         return ResponseEntity.ok().build();

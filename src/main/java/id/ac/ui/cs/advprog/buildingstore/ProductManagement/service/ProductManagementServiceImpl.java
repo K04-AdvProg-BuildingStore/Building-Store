@@ -66,4 +66,15 @@ public class ProductManagementServiceImpl implements ProductManagementService {
     public List<ProductManagementModel> searchProductsByName(String name) {
         return repository.findByNameContainingIgnoreCase(name);
     }
+    @Override
+    public void setProductStock(Integer productId, Integer newQuantity) {
+        ProductManagementModel product = repository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        product.setQuantity(newQuantity);
+        product.setStatus(newQuantity > 0 ? "Available" : "Out of Stock");
+        repository.save(product);
+    }
+
+
 }

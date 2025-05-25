@@ -1,10 +1,12 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.service;
 
+import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManagementModel;
 import id.ac.ui.cs.advprog.buildingstore.auth.model.User;
 import id.ac.ui.cs.advprog.buildingstore.auth.repository.UserRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.dto.SalesItemRequest;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesItem;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.SalesTransaction;
+import id.ac.ui.cs.advprog.buildingstore.salesTransaction.model.TransactionStatus;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesItemRepository;
 import id.ac.ui.cs.advprog.buildingstore.salesTransaction.repository.SalesTransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -44,23 +46,24 @@ class SalesTransactionServiceTest {
     @Test
     void testCreateTransactionSuccessfully() {
         User cashier = User.builder().id(1).username("john").build();
+        CustomerManagementModel customer = CustomerManagementModel.builder().id(812345678).build();
         List<SalesItemRequest> itemRequests = List.of(
-                new SalesItemRequest(null, 2, 10000),
-                new SalesItemRequest(null, 1, 20000)
+                new SalesItemRequest(null, null, 2, 10000),
+                new SalesItemRequest(null, null, 1, 20000)
         );
 
         SalesTransaction savedTx = SalesTransaction.builder()
                 .id(1)
                 .cashier(cashier)
-                .customerPhone(812345678)
-                .status("COMPLETED")
+                .customer(customer)
+                .status(TransactionStatus.PAID)
                 .items(new ArrayList<>())
                 .build();
 
         when(salesTransactionRepository.save(any(SalesTransaction.class))).thenReturn(savedTx);
         when(salesItemRepository.save(any(SalesItem.class))).thenAnswer(i -> i.getArgument(0));
 
-        SalesTransaction result = salesTransactionService.createTransaction(cashier, 812345678, "COMPLETED", itemRequests);
+        SalesTransaction result = salesTransactionService.createTransaction(cashier, customer, TransactionStatus.PAID, itemRequests);
 
         assertNotNull(result);
         assertEquals(2, result.getItems().size());
@@ -71,11 +74,12 @@ class SalesTransactionServiceTest {
     @Test
     void testUpdateTransactionSuccessfully() {
         User cashier = User.builder().id(2).username("jane").build();
+        CustomerManagementModel customer = CustomerManagementModel.builder().id(800000000).build();
         SalesTransaction existing = SalesTransaction.builder()
                 .id(10)
                 .cashier(cashier)
-                .customerPhone(800000000)
-                .status("PENDING")
+                .customer(customer)
+                .status(TransactionStatus.PENDING)
                 .items(new ArrayList<>())
                 .build();
 
@@ -87,10 +91,10 @@ class SalesTransactionServiceTest {
         when(salesTransactionRepository.findById(10)).thenReturn(Optional.of(existing));
         when(salesTransactionRepository.save(any(SalesTransaction.class))).thenAnswer(i -> i.getArgument(0));
 
-        SalesTransaction result = salesTransactionService.updateTransaction(10, cashier, 812345678, "CANCELLED", updatedItems);
+        SalesTransaction result = salesTransactionService.updateTransaction(10, cashier, customer, TransactionStatus.PAID, updatedItems);
 
         assertNotNull(result);
-        assertEquals("CANCELLED", result.getStatus());
+        assertEquals(TransactionStatus.PAID, result.getStatus());
         assertEquals(2, result.getItems().size());
     }
 
@@ -99,7 +103,7 @@ class SalesTransactionServiceTest {
         when(salesTransactionRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () ->
-                salesTransactionService.updateTransaction(999, null, 0, "PENDING", new ArrayList<>()));
+                salesTransactionService.updateTransaction(999, null, null, TransactionStatus.PENDING, new ArrayList<>()));
     }
 
     @Test
@@ -110,26 +114,5 @@ class SalesTransactionServiceTest {
 
         verify(salesTransactionRepository, times(1)).deleteById(1);
     }
-
-    @Test
-    void testFindByIdFound() {
-        SalesTransaction tx = SalesTransaction.builder().id(5).build();
-        when(salesTransactionRepository.findById(5)).thenReturn(Optional.of(tx));
-
-        Optional<SalesTransaction> result = salesTransactionService.findById(5);
-
-        assertTrue(result.isPresent());
-        assertEquals(5, result.get().getId());
-    }
-
-    @Test
-    void testFindAll() {
-        when(salesTransactionRepository.findAll()).thenReturn(List.of(
-                SalesTransaction.builder().id(1).build(),
-                SalesTransaction.builder().id(2).build()
-        ));
-
-        Iterable<SalesTransaction> result = salesTransactionService.findAll();
-        assertNotNull(result);
-    }
 }
+

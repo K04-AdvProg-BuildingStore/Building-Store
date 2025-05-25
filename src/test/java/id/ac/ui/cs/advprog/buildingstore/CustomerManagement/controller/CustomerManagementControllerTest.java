@@ -14,11 +14,14 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -100,5 +103,59 @@ public class CustomerManagementControllerTest {
                 .andExpect(status().isOk());
 
         verify(service).deleteCustomerByPhone("08123456789");
+    }
+
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @Test
+    void testGetAllCustomers() throws Exception {
+        // Create test data
+        CustomerManagementModel customer1 = CustomerManagementModel.builder()
+                .id(1)
+                .name("Alice")
+                .phoneNumber("08123456789")
+                .email("alice@example.com")
+                .gender("Female")
+                .isActive(true)
+                .build();
+        
+        CustomerManagementModel customer2 = CustomerManagementModel.builder()
+                .id(2)
+                .name("Bob")
+                .phoneNumber("08123456788")
+                .email("bob@example.com")
+                .gender("Male")
+                .isActive(true)
+                .build();
+
+        List<CustomerManagementModel> customers = Arrays.asList(customer1, customer2);
+        
+        // Set up mock service behavior
+        when(service.getAllCustomers()).thenReturn(customers);
+
+        // Perform GET request and verify response
+        mockMvc.perform(get("/customers/all"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("Alice"))
+                .andExpect(jsonPath("$[0].phoneNumber").value("08123456789"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].name").value("Bob"))
+                .andExpect(jsonPath("$[1].phoneNumber").value("08123456788"));
+    }
+
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @Test
+    void testGetAllCustomersEmptyList() throws Exception {
+        // Set up mock service to return empty list
+        when(service.getAllCustomers()).thenReturn(List.of());
+
+        // Perform GET request and verify response
+        mockMvc.perform(get("/customers/all"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0))
+                .andExpect(content().json("[]"));
     }
 }

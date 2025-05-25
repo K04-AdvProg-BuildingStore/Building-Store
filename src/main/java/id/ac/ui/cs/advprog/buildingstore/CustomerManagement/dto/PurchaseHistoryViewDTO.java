@@ -1,11 +1,11 @@
 package id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto;
 
 public interface PurchaseHistoryViewDTO {
+    Integer getCustomerId();
     String getCustomerName();
     String getPhoneNumber();
     Integer getTransactionId();
-    Integer getStatus(); // changed from String to Integer
-    Integer getProductId(); // changed from String to Integer
+    Integer getProductId();
     Integer getQuantity();
     Double getPrice();
 }

@@ -65,9 +65,9 @@
 //         assertEquals("Alice", row[0]);
 //         assertEquals("0811111111", row[1]);
 //         assertEquals(transactionId.intValue(), ((Number) row[2]).intValue());
-//         assertEquals(1, ((Number) row[3]).intValue()); // status as integer
-//         assertEquals(productId, ((Number) row[4]).intValue()); // productId as integer
-//         assertEquals(2, ((Number) row[5]).intValue());
-//         assertEquals(10000.0, ((Number) row[6]).doubleValue());
+//         // assertEquals(1, ((Number) row[3]).intValue()); // status as integer, removed
+//         assertEquals(productId, ((Number) row[3]).intValue()); // productId as integer
+//         assertEquals(2, ((Number) row[4]).intValue());
+//         assertEquals(10000.0, ((Number) row[5]).doubleValue());
 //     }
 // }
