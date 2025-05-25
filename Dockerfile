@@ -1,11 +1,22 @@
-FROM eclipse-temurin:21-jdk-alpine
+FROM docker.io/library/eclipse-temurin:21-jdk-alpine AS builder
 
-LABEL maintainer="Building-Store"
+WORKDIR /src/buildingstore
+COPY . .
+RUN ./gradlew clean bootJar
 
-WORKDIR /app
+FROM docker.io/library/eclipse-temurin:21-jre-alpine AS runner
 
-COPY build/libs/*.jar app.jar
+ARG USER_NAME=buildingstore
+ARG USER_UID=1000
+ARG USER_GID=${USER_UID}
+
+RUN addgroup -g ${USER_GID} ${USER_NAME} \
+    && adduser -h /opt/buildingstore -D -u ${USER_UID} -G ${USER_NAME} ${USER_NAME}
+
+USER ${USER_NAME}
+WORKDIR /opt/buildingstore
+COPY --from=builder --chown=${USER_UID}:${USER_GID} /src/buildingstore/build/libs/*.jar app.jar
 
 EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java"]
+CMD ["-jar", "app.jar"]

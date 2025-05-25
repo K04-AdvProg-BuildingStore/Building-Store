@@ -8,6 +8,22 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@NamedEntityGraph(
+        name = "SalesTransaction.withCashierCustomerItemsProduct",
+        attributeNodes = {
+                @NamedAttributeNode("cashier"),
+                @NamedAttributeNode("customer"),
+                @NamedAttributeNode(value = "items", subgraph = "itemsWithProduct")
+        },
+        subgraphs = {
+                @NamedSubgraph(
+                        name = "itemsWithProduct",
+                        attributeNodes = {
+                                @NamedAttributeNode("product")
+                        }
+                )
+        }
+)
 @Entity
 @Getter
 @Setter
