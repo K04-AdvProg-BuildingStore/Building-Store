@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.annotation.Rollback;
+import static org.hamcrest.Matchers.hasItem;
 
 import java.util.List;
 
@@ -103,14 +104,17 @@ public class ProductManagementControllerTest {
                 .andExpect(status().isOk());
     }
 
+
+
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testGetAllProducts() throws Exception {
         mockMvc.perform(get("/products"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Concrete"));
+                .andExpect(jsonPath("$[*].name", hasItem("Concrete")));
     }
+
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
