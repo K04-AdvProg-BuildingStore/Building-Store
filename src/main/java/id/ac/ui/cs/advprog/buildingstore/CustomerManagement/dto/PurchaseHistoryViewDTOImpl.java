@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PurchaseHistoryViewDTOImpl implements PurchaseHistoryViewDTO {
+    private Integer customerId;
     private String customerName;
     private String phoneNumber;
     private Integer transactionId;
