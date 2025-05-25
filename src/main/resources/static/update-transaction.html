@@ -1,129 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Update Sales Transaction</title>
+    <title>Sales Transactions</title>
     <style>
         body { font-family: Arial, sans-serif; }
-        form { max-width: 600px; margin: 40px auto; }
-        label { display: block; margin-top: 12px; }
-        input, select { width: 100%; padding: 8px; margin-top: 4px; }
-        button { margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
         th { background: #f4f4f4; }
-        .actions button { margin: 0 2px; }
+        button { margin: 0 2px; }
     </style>
 </head>
 <body>
-<h2>Update Sales Transaction</h2>
-<form id="updateForm">
-    <label>Customer ID
-        <input type="number" name="customerId" required>
-    </label>
-    <label>Cashier ID
-        <input type="number" name="cashierId" required>
-    </label>
-    <label>Status
-        <select name="status" required>
-            <option value="0">PENDING</option>
-            <option value="1">PAID</option>
-        </select>
-    </label>
-    <h3>Sales Items</h3>
-    <table id="itemsTable">
-        <thead>
-        <tr>
-            <th>Product ID</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th class="actions">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- Sales items will be rendered here -->
-        </tbody>
-    </table>
-    <button type="button" onclick="addItemRow()">Add Item</button>
-    <button type="submit">Update</button>
-</form>
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    let items = [];
+<div class="top-bar">
+    <button onclick="createTransaction()">Create</button>
+</div>
+<table id="transactionsTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Customer ID</th>
+        <th>Status</th>
+        <th>Cashier Username</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Transactions will be populated here -->
+    </tbody>
+</table>
 
-    async function loadTransaction() {
-        const res = await fetch(`/api/sales-transactions/${id}`, {
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt')
-            }
-        });
-        if (!res.ok) return;
-        const tx = await res.json();
-        document.querySelector('[name="customerId"]').value = tx.customerId;
-        document.querySelector('[name="cashierId"]').value = tx.cashierId || '';
-        document.querySelector('[name="status"]').value = tx.status === "PENDING" ? 0 : 1;
-        items = tx.items || [];
-        renderItems();
+<script>
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
     }
 
-    function renderItems() {
-        const tbody = document.getElementById('itemsTable').querySelector('tbody');
+    function redirectLogin() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+        }
+    }
+    async function fetchTransactions() {
+        const res = await fetch('/api/sales-transactions', {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+        const transactions = await res.json();
+        const tbody = document.getElementById('transactionsTable').querySelector('tbody');
         tbody.innerHTML = '';
-        items.forEach((item, idx) => {
+        transactions.forEach(tx => {
+            const isPending = tx.status === 0 || tx.status === 'PENDING';
             const tr = document.createElement('tr');
+            tr.setAttribute('data-id', tx.id); // Add this line
             tr.innerHTML = `
-                <td><input type="number" value="${item.productId}" onchange="updateItem(${idx}, 'productId', this.value)" required></td>
-                <td><input type="number" value="${item.quantity}" min="1" onchange="updateItem(${idx}, 'quantity', this.value)" required></td>
-                <td><input type="number" value="${item.price}" min="0" onchange="updateItem(${idx}, 'price', this.value)" required></td>
-                <td class="actions">
-                    <button type="button" onclick="removeItemRow(${idx})">Remove</button>
-                </td>
-            `;
+        <td>${tx.id}</td>
+        <td>${tx.customerId}</td>
+        <td>${tx.status}</td>
+        <td>${tx.cashierUsername || ''}</td>
+        <td>
+            <button onclick="updateTransaction(${tx.id})">Update</button>
+            <button onclick="deleteTransaction(${tx.id})">Delete</button>
+            ${isPending ? `<button onclick="payTransaction(${tx.id})">Pay</button>` : ''}
+
+        </td>
+    `;
             tbody.appendChild(tr);
         });
     }
 
-    function addItemRow() {
-        items.push({ productId: '', quantity: 1, price: 0 });
-        renderItems();
+    function payTransaction(id) {
+        // Placeholder: redirect to payment page or show alert
+        // location.href = `payment.html?id=${id}`;
+        alert('Payment page placeholder for transaction ID: ' + id);
     }
 
-    function removeItemRow(idx) {
-        items.splice(idx, 1);
-        renderItems();
+    function createTransaction() {
+        // Redirect to create transaction page or open modal
+        window.location.href = 'create-transaction.html';
     }
 
-    function updateItem(idx, field, value) {
-        items[idx][field] = field === 'productId' || field === 'quantity' || field === 'price' ? parseInt(value) : value;
+    function updateTransaction(id) {
+        // Redirect to update transaction page or open modal
+        window.location.href = `update-transaction.html?id=${id}`;
     }
 
-    document.getElementById('updateForm').onsubmit = async function(e) {
-        e.preventDefault();
-        const data = {
-            customerId: parseInt(this.customerId.value),
-            cashierId: parseInt(this.cashierId.value),
-            status: parseInt(this.status.value),
-            items: items.map(item => ({
-                productId: parseInt(item.productId),
-                quantity: parseInt(item.quantity),
-                price: parseInt(item.price)
-            }))
-        };
-        await fetch(`/api/sales-transactions/${id}`, {
-            method: 'PUT',
+    async function deleteTransaction(id) {
+        if (!confirm('Are you sure you want to delete this transaction?')) return;
+        const res = await fetch(`/api/sales-transactions/${id}`, {
+            method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('jwt')
-            },
-            body: JSON.stringify(data)
+            }
         });
-        window.location.href = 'sales-transactions.html';
-    };
+        if (res.ok) {
+            // Remove the row from the table
+            const row = document.querySelector(`#transactionsTable tr[data-id="${id}"]`);
+            if (row) row.remove();
+        } else {
+            alert('Failed to delete transaction.');
+        }
+    }
 
-    loadTransaction();
-    window.addItemRow = addItemRow;
-    window.removeItemRow = removeItemRow;
-    window.updateItem = updateItem;
+    // Initial load
+    fetchTransactions();
 </script>
 </body>
 </html>

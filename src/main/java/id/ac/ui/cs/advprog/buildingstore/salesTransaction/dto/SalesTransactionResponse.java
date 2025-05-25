@@ -11,8 +11,8 @@ import java.util.List;
 public class SalesTransactionResponse {
     private Integer id;
     private Integer customerId;
+    private Integer cashierId;
     private TransactionStatus status;
     private String cashierUsername;
     private List<SalesItemResponse> items;
-
 }

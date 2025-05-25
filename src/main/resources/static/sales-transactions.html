@@ -42,16 +42,30 @@
 </table>
 
 <script>
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    function redirectLogin() {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+            window.location.href = 'authenticate.html';
+        }
+    }
     async function fetchTransactions() {
         const res = await fetch('/api/sales-transactions', {
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt')
-            }
+            method: 'GET',
+            headers: getAuthHeaders()
         });
         const transactions = await res.json();
         const tbody = document.getElementById('transactionsTable').querySelector('tbody');
         tbody.innerHTML = '';
         transactions.forEach(tx => {
+            const isPending = tx.status === 0 || tx.status === 'PENDING';
             const tr = document.createElement('tr');
             tr.setAttribute('data-id', tx.id); // Add this line
             tr.innerHTML = `
@@ -62,10 +76,18 @@
         <td>
             <button onclick="updateTransaction(${tx.id})">Update</button>
             <button onclick="deleteTransaction(${tx.id})">Delete</button>
+            ${isPending ? `<button onclick="payTransaction(${tx.id})">Pay</button>` : ''}
+
         </td>
     `;
             tbody.appendChild(tr);
         });
+    }
+
+    function payTransaction(id) {
+        // Placeholder: redirect to payment page or show alert
+        // location.href = `payment.html?id=${id}`;
+        alert('Payment page placeholder for transaction ID: ' + id);
     }
 
     function createTransaction() {
