@@ -62,28 +62,38 @@
     </style>
 </head>
 <body>
-<div style="display: flex; align-items: center; margin-bottom: 20px;">
-    <form id="searchForm" style="flex-grow: 1;">
-        <input type="text" id="searchName" placeholder="Search by name..." style="width: 100%; padding: 8px;">
-    </form>
-</div>
+<div id="sidebar-container"></div>
 
-<button class="primary" onclick="openAddModal()">+ Product</button>
-<div id="loading" style="display:none;">Loading...</div>
-<table id="productTable">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Quantity</th>
-        <th>Status</th>
-        <th>Info</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody id="products"></tbody>
-</table>
+<script>
+    fetch('navbar.html')
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('sidebar-container').innerHTML = html;
+        });
+</script><div style="margin-left: 220px; padding: 20px;">
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <form id="searchForm" style="flex-grow: 1;">
+            <input type="text" id="searchName" placeholder="Search by name..." style="width: 100%; padding: 8px;">
+        </form>
+    </div>
+
+    <button class="primary" onclick="openAddModal()">+ Product</button>
+    <div id="loading" style="display:none;">Loading...</div>
+    <table id="productTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Status</th>
+            <th>Info</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="products"></tbody>
+    </table>
+</div> <!-- 👈 closes main content wrapper -->
 
 <div class="modal" id="modal">
     <div class="modal-content">
@@ -144,7 +154,11 @@
 
         const response = await fetch(url, {
             method,
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('jwt')}`
+            },
+
             body: JSON.stringify(product)
         });
 
@@ -163,22 +177,30 @@
         loading.style.display = "block";
 
         try {
-            const response = await fetch("/products");
+            const token = localStorage.getItem('jwt');
+            const response = await fetch("/products", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch products");
+
             const products = await response.json();
             products.forEach(product => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-          <td>${product.id}</td>
-          <td>${product.name}</td>
-          <td>${product.price}</td>
-          <td>${product.quantity}</td>
-          <td>${product.status}</td>
-          <td>${product.information}</td>
-          <td>
-            <button class="action-btn edit" onclick='openEditModal(${JSON.stringify(product)})'>&#9998;</button>
-            <button class="action-btn delete" onclick='deleteProduct(${product.id})'>&#128465;</button>
-          </td>
-        `;
+              <td>${product.id}</td>
+              <td>${product.name}</td>
+              <td>${product.price}</td>
+              <td>${product.quantity}</td>
+              <td>${product.status}</td>
+              <td>${product.information}</td>
+              <td>
+                <button class="action-btn edit" onclick='openEditModal(${JSON.stringify(product)})'>&#9998;</button>
+                <button class="action-btn delete" onclick='deleteProduct(${product.id})'>&#128465;</button>
+              </td>
+            `;
                 tbody.appendChild(row);
             });
         } catch (err) {
@@ -188,15 +210,26 @@
         }
     }
 
+
     async function deleteProduct(id) {
         if (!confirm("Are you sure you want to delete this product?")) return;
-        const response = await fetch(`/products/${id}`, { method: "DELETE" });
+
+        const token = localStorage.getItem('jwt');
+        const response = await fetch(`/products/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
         if (response.ok) {
             fetchProducts();
         } else {
             alert("Failed to delete.");
         }
     }
+
 
     window.onload = fetchProducts;
     document.getElementById("searchForm").addEventListener("submit", async function(event) {
@@ -208,7 +241,12 @@
         loading.style.display = "block";
 
         try {
-            const response = await fetch(`/products/search?name=${encodeURIComponent(name)}`);
+            const response = await fetch(`/products/search?name=${encodeURIComponent(name)}`, {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem('jwt')}`
+                }
+            });
+
             if (!response.ok) throw new Error("Search failed");
 
             const products = await response.json();
