@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Manager</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #d62828;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f5f5f5;
+        }
+        .action-btn {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+        .edit {
+            color: #f77f00;
+        }
+        .delete {
+            color: #d62828;
+        }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: #fff; padding: 20px; border-radius: 5px; width: 350px;
+        }
+        input, button {
+            margin: 5px 0; padding: 8px; width: 100%;
+        }
+        button.primary {
+            background-color: #f77f00;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div style="display: flex; align-items: center; margin-bottom: 20px;">
+    <form id="searchForm" style="flex-grow: 1;">
+        <input type="text" id="searchName" placeholder="Search by name..." style="width: 100%; padding: 8px;">
+    </form>
+</div>
+
+<button class="primary" onclick="openAddModal()">+ Product</button>
+<div id="loading" style="display:none;">Loading...</div>
+<table id="productTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Status</th>
+        <th>Info</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody id="products"></tbody>
+</table>
+
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Product</h3>
+        <form id="modalForm">
+            <input type="hidden" id="productId">
+            <input type="text" id="modalName" placeholder="Name" required>
+            <input type="number" id="modalPrice" placeholder="Price" required>
+            <input type="number" id="modalQuantity" placeholder="Quantity" required>
+            <input type="text" id="modalStatus" placeholder="Status" required>
+            <input type="text" id="modalInformation" placeholder="Information">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" onclick="closeModal()">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById("modal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalForm = document.getElementById("modalForm");
+
+    function openAddModal() {
+        modalTitle.innerText = "Add Product";
+        modalForm.reset();
+        document.getElementById("productId").value = "";
+        modal.style.display = "flex";
+    }
+
+    function openEditModal(product) {
+        modalTitle.innerText = "Edit Product";
+        document.getElementById("productId").value = product.id;
+        document.getElementById("modalName").value = product.name;
+        document.getElementById("modalPrice").value = product.price;
+        document.getElementById("modalQuantity").value = product.quantity;
+        document.getElementById("modalStatus").value = product.status;
+        document.getElementById("modalInformation").value = product.information;
+        modal.style.display = "flex";
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    modalForm.addEventListener("submit", async function(event) {
+        event.preventDefault();
+        const id = document.getElementById("productId").value;
+        const product = {
+            name: document.getElementById("modalName").value,
+            price: parseInt(document.getElementById("modalPrice").value),
+            quantity: parseInt(document.getElementById("modalQuantity").value),
+            status: document.getElementById("modalStatus").value,
+            information: document.getElementById("modalInformation").value
+        };
+
+        const url = id ? `/products/${id}` : "/products";
+        const method = id ? "PUT" : "POST";
+
+        const response = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(product)
+        });
+
+        if (response.ok) {
+            closeModal();
+            fetchProducts();
+        } else {
+            alert("Failed to save product.");
+        }
+    });
+
+    async function fetchProducts() {
+        const tbody = document.getElementById("products");
+        const loading = document.getElementById("loading");
+        tbody.innerHTML = "";
+        loading.style.display = "block";
+
+        try {
+            const response = await fetch("/products");
+            const products = await response.json();
+            products.forEach(product => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+          <td>${product.id}</td>
+          <td>${product.name}</td>
+          <td>${product.price}</td>
+          <td>${product.quantity}</td>
+          <td>${product.status}</td>
+          <td>${product.information}</td>
+          <td>
+            <button class="action-btn edit" onclick='openEditModal(${JSON.stringify(product)})'>&#9998;</button>
+            <button class="action-btn delete" onclick='deleteProduct(${product.id})'>&#128465;</button>
+          </td>
+        `;
+                tbody.appendChild(row);
+            });
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:red;">Error: ${err.message}</td></tr>`;
+        } finally {
+            loading.style.display = "none";
+        }
+    }
+
+    async function deleteProduct(id) {
+        if (!confirm("Are you sure you want to delete this product?")) return;
+        const response = await fetch(`/products/${id}`, { method: "DELETE" });
+        if (response.ok) {
+            fetchProducts();
+        } else {
+            alert("Failed to delete.");
+        }
+    }
+
+    window.onload = fetchProducts;
+    document.getElementById("searchForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+        const name = document.getElementById("searchName").value;
+        const tbody = document.getElementById("products");
+        const loading = document.getElementById("loading");
+        tbody.innerHTML = "";
+        loading.style.display = "block";
+
+        try {
+            const response = await fetch(`/products/search?name=${encodeURIComponent(name)}`);
+            if (!response.ok) throw new Error("Search failed");
+
+            const products = await response.json();
+            if (products.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='7'>No products found.</td></tr>";
+                return;
+            }
+
+            products.forEach(product => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+              <td>${product.id}</td>
+              <td>${product.name}</td>
+              <td>${product.price}</td>
+              <td>${product.quantity}</td>
+              <td>${product.status}</td>
+              <td>${product.information}</td>
+              <td>
+                <button class="action-btn edit" onclick='openEditModal(${JSON.stringify(product)})'>&#9998;</button>
+                <button class="action-btn delete" onclick='deleteProduct(${product.id})'>&#128465;</button>
+              </td>
+            `;
+                tbody.appendChild(row);
+            });
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:red;">Error: ${err.message}</td></tr>`;
+        } finally {
+            loading.style.display = "none";
+        }
+    });
+
+</script>
+</body>
+</html>

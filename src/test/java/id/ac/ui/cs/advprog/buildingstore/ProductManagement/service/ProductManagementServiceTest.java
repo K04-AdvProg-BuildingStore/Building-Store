@@ -145,4 +145,20 @@ public class ProductManagementServiceTest {
         assertEquals("Hammer", results.get(0).getName());
         verify(repository, times(1)).findByNameContainingIgnoreCase("Ham");
     }
+    @Test
+    void testSetProductStock_updatesQuantityAndStatus() {
+        ProductManagementModel product = new ProductManagementModel();
+        product.setId(8);
+        product.setQuantity(10);
+        product.setStatus("Available");
+
+        when(repository.findById(8)).thenReturn(Optional.of(product));
+
+        service.setProductStock(8, 0);
+
+        assertEquals(0, product.getQuantity());
+        assertEquals("Out of Stock", product.getStatus());
+        verify(repository).save(product);
+    }
+
 }
