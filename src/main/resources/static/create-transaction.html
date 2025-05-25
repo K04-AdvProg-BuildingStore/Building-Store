@@ -27,6 +27,7 @@
 <body>
 <h2>Create Sales Transaction</h2>
 <form id="createForm">
+    <div id="errorMessage" style="color:red; display:none;"></div>
     <label>Customer ID
         <input type="number" name="customerId" required>
     </label>
@@ -71,9 +72,10 @@
             <label>Quantity
                 <input type="number" name="quantity" min="1" required>
             </label>
-            <label>Price
-                <input type="number" name="price" min="0" required>
-            </label>
+            <div>
+                <strong>Price: </strong>
+                <span id="calculatedPrice">-</span>
+            </div>
             <button type="submit" id="itemSaveBtn">Add Item</button>
         </form>
     </div>
@@ -81,6 +83,51 @@
 
 <script>
     let items = [];
+    let currentProductPrice = 0;
+
+    async function fetchProductPrice(productId) {
+        if (!productId) return 0;
+        console.log(productId)
+        try {
+            const res = await fetch(`/products/${productId}`, {
+                headers: getAuthHeaders()
+            });
+            if (!res.ok) return 0;
+            const product = await res.json();
+            console.log('Fetched product:', product); // Debug line
+            return product && product.price != null ? product.price : 0;
+        } catch (e) {
+            console.error(e);
+            return 0;
+        }
+    }
+
+    async function updateCalculatedPrice() {
+        const form = document.getElementById('itemForm');
+        const productId = form.productId.value;
+        const quantity = form.quantity.value;
+        const priceSpan = document.getElementById('calculatedPrice');
+        console.log('updateCalculatedPrice called');
+        console.log('productId:', productId, 'quantity:', quantity);
+
+        if (!productId || !quantity) {
+            console.log('Missing productId or quantity');
+            priceSpan.textContent = '-';
+            currentProductPrice = 0;
+            return;
+        }
+        const productPrice = await fetchProductPrice(productId);
+        console.log('Fetched productPrice:', productPrice);
+        currentProductPrice = productPrice;
+        if (productPrice > 0) {
+            const total = productPrice * quantity;
+            console.log('Calculated total price:', total);
+            priceSpan.textContent = total;
+        } else {
+            console.log('Product price is 0 or invalid');
+            priceSpan.textContent = '-';
+        }
+    }
 
     function renderItems() {
         const tbody = document.getElementById('itemsTable').querySelector('tbody');
@@ -108,13 +155,15 @@
         form.editIndex.value = '';
         document.getElementById('modalTitle').textContent = 'Add Item';
         document.getElementById('itemSaveBtn').textContent = 'Add Item';
+        document.getElementById('calculatedPrice').textContent = '-';
+        currentProductPrice = 0;
         if (editIdx !== null) {
             form.editIndex.value = editIdx;
             form.productId.value = items[editIdx].productId;
             form.quantity.value = items[editIdx].quantity;
-            form.price.value = items[editIdx].price;
             document.getElementById('modalTitle').textContent = 'Edit Item';
             document.getElementById('itemSaveBtn').textContent = 'Update Item';
+            updateCalculatedPrice();
         }
         modal.style.display = 'block';
     }
@@ -123,14 +172,16 @@
         document.getElementById('itemModal').style.display = 'none';
     }
 
-    function saveItem(e) {
+    async function saveItem(e) {
         e.preventDefault();
         const form = e.target;
-        const item = {
-            productId: parseInt(form.productId.value),
-            quantity: parseInt(form.quantity.value),
-            price: parseInt(form.price.value)
-        };
+        const productId = parseInt(form.productId.value);
+        const quantity = parseInt(form.quantity.value);
+
+        // Always fetch the latest price before saving
+        const productPrice = await fetchProductPrice(productId);
+        const price = productPrice * quantity;
+        const item = { productId, quantity, price };
         const idx = form.editIndex.value;
         if (idx === '') {
             items.push(item);
@@ -149,7 +200,13 @@
         items.splice(idx, 1);
         renderItems();
     }
-
+    function getAuthHeaders() {
+        const token = localStorage.getItem('jwt');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
     function updateItemsSummary() {
         const div = document.getElementById('itemsSummary');
         if (items.length === 0) {
@@ -167,26 +224,49 @@
         }
     };
 
+    //submission handler for the main form
     document.getElementById('createForm').onsubmit = async function(e) {
         e.preventDefault();
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+
+        if (items.length === 0) {
+            errorDiv.textContent = 'Please add at least one sales item.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
         const data = {
             customerId: parseInt(this.customerId.value),
             cashierId: parseInt(this.cashierId.value),
             status: parseInt(this.status.value),
             items: items
         };
-        await fetch('/api/sales-transactions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt')
-            },
-            body: JSON.stringify(data)
-        });
-        window.location.href = 'sales-transactions.html';
+        try {
+            const res = await fetch('/api/sales-transactions', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const resBody = await res.json().catch(() => ({}));
+                errorDiv.textContent = resBody.error || `Error ${res.status}: Failed to create transaction.`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+            window.location.href = 'sales-transactions.html';
+        } catch (err) {
+            errorDiv.textContent = 'Network error.';
+            errorDiv.style.display = 'block';
+        }
     };
 
+
+    document.getElementById('itemForm').productId.addEventListener('change', updateCalculatedPrice);
+    document.getElementById('itemForm').quantity.addEventListener('input', updateCalculatedPrice);
     renderItems();
 </script>
 </body>
 </html>
+
