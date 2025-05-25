@@ -26,6 +26,7 @@ public class SalesTransactionService {
     private final SalesTransactionRepository salesTransactionRepository;
     private final SalesItemRepository salesItemRepository;
     private final ProductManagementRepository productRepository;
+    private final SalesTransactionMetricsService metricsService; // Add this line
 
     @Transactional
     public SalesTransaction createTransaction(User cashier, CustomerManagementModel customer, TransactionStatus status, List<SalesItemRequest> items) {
@@ -60,6 +61,7 @@ public class SalesTransactionService {
                     .build();
             savedTransaction.getItems().add(salesItemRepository.save(newItem));
         }
+        metricsService.incrementTransactionCount();
 
         return savedTransaction;
     }
