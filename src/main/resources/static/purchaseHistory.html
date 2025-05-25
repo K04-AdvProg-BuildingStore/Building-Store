@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Purchase History</title>
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background-color: white;
+        }
+        .header {
+            width: 100%;
+            height: 70px;
+            border-bottom: 1px solid #DDDDDD;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 30px;
+        }
+        .logout {
+            color: rgba(141, 141, 141, 0.87);
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .container {
+            max-width: 1134px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .page-title {
+            margin: 40px 0;
+        }
+        .title {
+            color: #3C3C3C;
+            font-size: 24px;
+            font-family: Poppins;
+            font-weight: 600;
+        }
+        .customer-details {
+            color: #3C3C3C;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: #BF5300;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .back-icon {
+            margin-right: 5px;
+        }
+        .table-container {
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead tr {
+            background-color: #DDDDDD;
+            height: 54px;
+        }
+        th {
+            color: #3C3C3C;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            text-transform: uppercase;
+            word-wrap: break-word;
+            text-align: left;
+            padding: 0 15px;
+        }
+        tbody tr {
+            height: 53px;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #DDDDDD;
+        }
+        td {
+            color: #3C3C3C;
+            font-size: 14px;
+            font-family: Poppins;
+            font-weight: 500;
+            word-wrap: break-word;
+            padding: 0 15px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #3C3C3C;
+            font-size: 16px;
+            font-family: Poppins;
+            font-weight: 500;
+        }
+        .total-amount {
+            text-align: right;
+            margin-top: 20px;
+            color: #3C3C3C;
+            font-size: 16px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logout" id="logoutBtn">Log out</div>
+    </div>
+    
+    <div class="container">
+        <div class="back-button" onclick="goBack()">
+            <i class="fa-solid fa-arrow-left back-icon"></i> Back to Customers
+        </div>
+        
+        <div class="page-title">
+            <h1 class="title">Purchase History</h1>
+            <div class="customer-details" id="customerDetails">Loading customer details...</div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Product ID</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="purchaseTableBody">
+                    <tr>
+                        <td colspan="5" class="no-data">Loading purchase history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="total-amount" id="totalAmount"></div>
+    </div>
+
+    <script>
+        // Check for authentication
+        function redirectLogin() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
+            }
+        }
+
+        // Redirect if not logged in
+        redirectLogin();
+
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            const token = localStorage.getItem('jwt');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        // Parse URL parameters to get customer ID
+        function getCustomerIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('customerId');
+        }
+
+        // Fetch customer details
+        async function fetchCustomerDetails() {
+            const customerId = getCustomerIdFromUrl();
+            
+            if (!customerId) {
+                alert('No customer ID provided');
+                window.location.href = 'customerManagement.html';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/customers/${customerId}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    const customer = await response.json();
+                    displayCustomerDetails(customer);
+                } else {
+                    alert('Failed to fetch customer data');
+                    window.location.href = 'customerManagement.html';
+                }
+            } catch (error) {
+                console.error('Error fetching customer data:', error);
+                alert('Failed to fetch customer data');
+                window.location.href = 'customerManagement.html';
+            }
+        }
+
+        // Display customer details
+        function displayCustomerDetails(customer) {
+            document.getElementById('customerDetails').innerHTML = `
+                Customer: ${customer.name} (${customer.phoneNumber}) - ID: ${customer.id}
+            `;
+        }
+
+        // Fetch purchase history
+        async function fetchPurchaseHistory() {
+            const customerId = getCustomerIdFromUrl();
+            
+            if (!customerId) {
+                return;
+            }
+            
+            try {
+                console.log('Fetching purchase history for customer ID:', customerId);
+                const response = await fetch(`/api/purchase-history/${customerId}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    const purchases = await response.json();
+                    console.log('Purchase history:', purchases);
+                    displayPurchaseHistory(purchases);
+                } else {
+                    console.error('Failed to fetch purchase history:', response.status);
+                    displayNoPurchases('No purchase history found for this customer');
+                }
+            } catch (error) {
+                console.error('Error fetching purchase history:', error);
+                displayNoPurchases('Error loading purchase history');
+            }
+        }
+
+        // Display purchase history
+        function displayPurchaseHistory(purchases) {
+            const tableBody = document.getElementById('purchaseTableBody');
+            tableBody.innerHTML = '';
+            
+            if (!purchases || purchases.length === 0) {
+                displayNoPurchases('No purchase history found for this customer');
+                return;
+            }
+            
+            let totalAmount = 0;
+            
+            purchases.forEach(purchase => {
+                const row = document.createElement('tr');
+                const total = purchase.quantity * purchase.price;
+                totalAmount += total;
+                
+                row.innerHTML = `
+                    <td>${purchase.transactionId}</td>
+                    <td>${purchase.productId}</td>
+                    <td>${purchase.quantity}</td>
+                    <td>$${purchase.price.toFixed(2)}</td>
+                    <td>$${total.toFixed(2)}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            document.getElementById('totalAmount').textContent = `Total: $${totalAmount.toFixed(2)}`;
+        }
+
+        // Display when no purchases found
+        function displayNoPurchases(message) {
+            const tableBody = document.getElementById('purchaseTableBody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="no-data">${message}</td>
+                </tr>
+            `;
+            document.getElementById('totalAmount').textContent = '';
+        }
+
+        // Go back to customers page
+        function goBack() {
+            window.location.href = 'customerManagement.html';
+        }
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
+                return;
+            }
+            await fetch('/api/v1/auth/logout', {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            localStorage.removeItem('jwt');
+            window.location.href = 'authenticate.html';
+        });
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchCustomerDetails();
+            fetchPurchaseHistory();
+        });
+    </script>
+</body>
+</html>

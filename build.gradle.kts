@@ -4,6 +4,7 @@ plugins {
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.sonarqube") version "4.4.1.3373"
+    id("io.freefair.lombok") version "8.6"
 }
 
 
@@ -27,12 +28,16 @@ repositories {
 }
 
 dependencies {
+    implementation ("io.micrometer:micrometer-registry-prometheus")
+    implementation ("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-web")
-    compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+    compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation ("org.postgresql:postgresql")
@@ -61,6 +66,7 @@ sonarqube {
         property("sonar.projectKey", "K04-AdvProg-BuildingStore_Building-Store")
         property("sonar.organization", "k04-advprog-buildingstore")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.gradle.skipCompile", "true")
     }
 }
 

@@ -60,7 +60,7 @@ public class SupplyService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Product not found"));
 
-       // productService.setProductStock(product.getId(), supply.getSupplyStock());
+        productService.setProductStock(product.getId(), supply.getSupplyStock());
 
 
         supply.setSupplier(sup);
