@@ -112,6 +112,7 @@ public class SalesTransactionController {
         return SalesTransactionResponse.builder()
                 .id(tx.getId())
                 .customerId(tx.getCustomer().getId())
+                .cashierId(tx.getCashier() != null ? tx.getCashier().getId() : null) // Add this line
                 .status(tx.getStatus())
                 .cashierUsername(tx.getCashier() != null ? tx.getCashier().getUsername() : null)
                 .items((tx.getItems() == null ? List.<SalesItem>of() : tx.getItems()).stream().map(item ->

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Sales Transaction</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        form { max-width: 600px; margin: 40px auto; }
+        label { display: block; margin-top: 12px; }
+        input, select { width: 100%; padding: 8px; margin-top: 4px; }
+        button { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #f4f4f4; }
+        .actions button { margin: 0 2px; }
+        /* Modal styles */
+        .modal {
+            display: none; position: fixed; z-index: 1; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background: #fff; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 400px;
+        }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h2>Create Sales Transaction</h2>
+<form id="createForm">
+    <label>Customer ID
+        <input type="number" name="customerId" required>
+    </label>
+    <label>Cashier ID
+        <input type="number" name="cashierId" required>
+    </label>
+    <label>Status
+        <select name="status" required>
+            <option value="0">PENDING</option>
+            <option value="1">PAID</option>
+        </select>
+    </label>
+    <h3>Sales Items</h3>
+    <table id="itemsTable">
+        <thead>
+        <tr>
+            <th>Product ID</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th class="actions">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Items will be rendered here -->
+        </tbody>
+    </table>
+    <button type="button" onclick="openModal()">Add Item</button>
+    <div id="itemsSummary"></div>
+    <button type="submit">Create</button>
+</form>
+
+<!-- Modal for adding/editing sales item -->
+<div id="itemModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h4 id="modalTitle">Add Item</h4>
+        <form id="itemForm" onsubmit="saveItem(event)">
+            <input type="hidden" name="editIndex" value="">
+            <label>Product ID
+                <input type="number" name="productId" required>
+            </label>
+            <label>Quantity
+                <input type="number" name="quantity" min="1" required>
+            </label>
+            <label>Price
+                <input type="number" name="price" min="0" required>
+            </label>
+            <button type="submit" id="itemSaveBtn">Add Item</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let items = [];
+
+    function renderItems() {
+        const tbody = document.getElementById('itemsTable').querySelector('tbody');
+        tbody.innerHTML = '';
+        items.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.productId}</td>
+                <td>${item.quantity}</td>
+                <td>${item.price}</td>
+                <td class="actions">
+                    <button type="button" onclick="editItem(${idx})">Edit</button>
+                    <button type="button" onclick="deleteItem(${idx})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        updateItemsSummary();
+    }
+
+    function openModal(editIdx = null) {
+        const modal = document.getElementById('itemModal');
+        const form = document.getElementById('itemForm');
+        form.reset();
+        form.editIndex.value = '';
+        document.getElementById('modalTitle').textContent = 'Add Item';
+        document.getElementById('itemSaveBtn').textContent = 'Add Item';
+        if (editIdx !== null) {
+            form.editIndex.value = editIdx;
+            form.productId.value = items[editIdx].productId;
+            form.quantity.value = items[editIdx].quantity;
+            form.price.value = items[editIdx].price;
+            document.getElementById('modalTitle').textContent = 'Edit Item';
+            document.getElementById('itemSaveBtn').textContent = 'Update Item';
+        }
+        modal.style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('itemModal').style.display = 'none';
+    }
+
+    function saveItem(e) {
+        e.preventDefault();
+        const form = e.target;
+        const item = {
+            productId: parseInt(form.productId.value),
+            quantity: parseInt(form.quantity.value),
+            price: parseInt(form.price.value)
+        };
+        const idx = form.editIndex.value;
+        if (idx === '') {
+            items.push(item);
+        } else {
+            items[idx] = item;
+        }
+        closeModal();
+        renderItems();
+    }
+
+    function editItem(idx) {
+        openModal(idx);
+    }
+
+    function deleteItem(idx) {
+        items.splice(idx, 1);
+        renderItems();
+    }
+
+    function updateItemsSummary() {
+        const div = document.getElementById('itemsSummary');
+        if (items.length === 0) {
+            div.textContent = 'No sales items added.';
+        } else {
+            div.textContent = items.length + ' sales item(s) added.';
+        }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('itemModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+
+    document.getElementById('createForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const data = {
+            customerId: parseInt(this.customerId.value),
+            cashierId: parseInt(this.cashierId.value),
+            status: parseInt(this.status.value),
+            items: items
+        };
+        await fetch('/api/sales-transactions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt')
+            },
+            body: JSON.stringify(data)
+        });
+        window.location.href = 'sales-transactions.html';
+    };
+
+    renderItems();
+</script>
+</body>
+</html>
