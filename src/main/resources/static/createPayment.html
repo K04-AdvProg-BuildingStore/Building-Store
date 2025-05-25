@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Create Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .payment-form {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .transaction-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-form">
+            <h2 class="mb-4">Create Payment</h2>
+
+            <div class="transaction-details mb-4" id="transactionDetails">
+                <h4>Transaction Details</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Transaction ID:</strong> <span id="transactionId"></span></p>
+                        <p><strong>Customer ID:</strong> <span id="customerId"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong> <span id="transactionStatus"></span></p>
+                        <p><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
+                    </div>
+                </div>
+                <div id="previousPaymentsSection" style="display: none;">
+                    <h5 class="mt-3">Previous Payments</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previousPaymentsTable">
+                            <!-- Previous payments will be loaded here -->
+                        </tbody>
+                    </table>
+                    <p><strong>Remaining Amount:</strong> <span id="remainingAmount"></span></p>
+                </div>
+            </div>
+
+            <form id="paymentForm">
+                <input type="hidden" id="salesTransactionId" name="salesTransactionId">
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">Payment Type</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="">Select payment type</option>
+                        <option value="FULL">Full Payment</option>
+                        <option value="INSTALLMENT">Installment</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="method" class="form-label">Payment Method</label>
+                    <input type="text" class="form-control" id="method" name="method" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" class="form-control" id="amount" name="amount" step="0.01" readonly required>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Submit Payment</button>
+                    <a href="sales-transactions.html" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Authentication and utility functions
+        function getAuthHeaders() {
+            const token = localStorage.getItem('jwt');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function redirectLogin() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
+            }
+        }
+
+        // Redirect if not logged in
+        redirectLogin();
+
+        // Get transaction ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionId = urlParams.get('id');
+
+        if (!transactionId) {
+            alert('Transaction ID is required');
+            window.location.href = 'sales-transactions.html';
+        }
+
+        // Variables to store transaction data
+        let transaction;
+        let totalAmount = 0;
+        let remainingAmount = 0;
+        let hasInstallment = false;
+
+        // Load transaction details and previous payments
+        async function loadTransactionData() {
+            try {
+                // Fetch transaction details
+                const txResponse = await fetch(`/api/sales-transactions/${transactionId}`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!txResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${txResponse.status}`);
+                }
+
+                transaction = await txResponse.json();
+
+                // Calculate total amount from items
+                totalAmount = transaction.items.reduce((sum, item) => {
+                    return sum + (item.price * item.quantity);
+                }, 0);
+
+                // Update UI with transaction details
+                document.getElementById('transactionId').textContent = transaction.id;
+                document.getElementById('customerId').textContent = transaction.customerId;
+                document.getElementById('transactionStatus').textContent = transaction.status;
+                document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+                document.getElementById('salesTransactionId').value = transaction.id;
+
+                // Fetch previous payments for this transaction
+                const paymentsResponse = await fetch('/api/payments/history', {
+                    headers: getAuthHeaders()
+                });
+
+                if (!paymentsResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${paymentsResponse.status}`);
+                }
+
+                const allPayments = await paymentsResponse.json();
+
+                // Filter payments for this transaction
+                const previousPayments = allPayments.filter(payment =>
+                    payment.salesTransactionId === parseInt(transactionId)
+                );
+
+                // Check if there are previous payments
+                if (previousPayments.length > 0) {
+                    // Calculate remaining amount
+                    const paidAmount = previousPayments.reduce((sum, payment) => {
+                        return sum + parseFloat(payment.amount);
+                    }, 0);
+
+                    remainingAmount = totalAmount - paidAmount;
+
+                    // Check if there's an installment payment
+                    hasInstallment = previousPayments.some(payment =>
+                        payment.status === 'INSTALLMENT'
+                    );
+
+                    // Disable FULL option if installment exists
+                    if (hasInstallment) {
+                        document.querySelector('#status option[value="FULL"]').disabled = true;
+                    }
+
+                    // Show previous payments section
+                    document.getElementById('previousPaymentsSection').style.display = 'block';
+
+                    // Populate previous payments table
+                    const paymentTable = document.getElementById('previousPaymentsTable');
+                    paymentTable.innerHTML = '';
+
+                    previousPayments.forEach(payment => {
+                        const paymentDate = payment.createdAt ?
+                            new Date(payment.createdAt).toLocaleDateString() : '-';
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${paymentDate}</td>
+                            <td>${parseFloat(payment.amount).toFixed(2)}</td>
+                            <td>${payment.method}</td>
+                            <td>${payment.status}</td>
+                        `;
+                        paymentTable.appendChild(row);
+                    });
+
+                    // Update remaining amount display
+                    document.getElementById('remainingAmount').textContent = remainingAmount.toFixed(2);
+                } else {
+                    // No previous payments
+                    remainingAmount = totalAmount;
+                }
+            } catch (error) {
+                console.error('Error loading transaction data:', error);
+                alert('Failed to load transaction data. Please try again later.');
+            }
+        }
+
+        // Handle payment type selection
+        document.getElementById('status').addEventListener('change', function() {
+            const amountInput = document.getElementById('amount');
+
+            if (this.value === 'FULL') {
+                amountInput.value = remainingAmount.toFixed(2);
+                amountInput.readOnly = true;
+            } else if (this.value === 'INSTALLMENT') {
+                amountInput.value = '';
+                amountInput.readOnly = false;
+                amountInput.max = remainingAmount;
+            } else {
+                amountInput.value = '';
+                amountInput.readOnly = true;
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const paymentStatus = document.getElementById('status').value;
+            const paymentMethod = document.getElementById('method').value;
+            const paymentAmount = parseFloat(document.getElementById('amount').value);
+
+            // Validate inputs
+            if (!paymentStatus) {
+                alert('Please select a payment type');
+                return;
+            }
+
+            if (!paymentMethod) {
+                alert('Please enter a payment method');
+                return;
+            }
+
+            if (isNaN(paymentAmount) || paymentAmount <= 0) {
+                alert('Please enter a valid payment amount');
+                return;
+            }
+
+            // Validate payment amount based on type
+            if (paymentStatus === 'FULL' && paymentAmount !== remainingAmount) {
+                alert('Full payment amount must match the exact remaining amount');
+                return;
+            }
+
+            if (paymentStatus === 'INSTALLMENT' && paymentAmount > remainingAmount) {
+                alert('Installment amount cannot exceed the remaining amount');
+                return;
+            }
+
+            // Create payment object
+            const payment = {
+                salesTransactionId: parseInt(transactionId),
+                status: paymentStatus,
+                method: paymentMethod,
+                amount: paymentAmount
+            };
+
+            try {
+                // Submit payment
+                const response = await fetch('/api/payments/create', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payment)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                // Payment successful
+                alert('Payment created successfully!');
+                window.location.href = 'sales-transactions.html';
+            } catch (error) {
+                console.error('Error creating payment:', error);
+                alert('Failed to create payment. Please try again later.');
+            }
+        });
+
+        // Load transaction data on page load
+        loadTransactionData();
+    </script>
+</body>
+</html>

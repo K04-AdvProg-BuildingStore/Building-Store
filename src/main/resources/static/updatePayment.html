@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Update Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .payment-form {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .transaction-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-form">
+            <h2 class="mb-4">Update Payment</h2>
+
+            <div class="transaction-details mb-4" id="transactionDetails">
+                <h4>Transaction Details</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Transaction ID:</strong> <span id="transactionId"></span></p>
+                        <p><strong>Payment ID:</strong> <span id="paymentId"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Transaction Status:</strong> <span id="transactionStatus"></span></p>
+                        <p><strong>Created At:</strong> <span id="createdAt"></span></p>
+                    </div>
+                </div>
+                <div id="transactionSummary">
+                    <p><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
+                    <p><strong>Total Paid:</strong> <span id="totalPaid"></span></p>
+                    <p><strong>Remaining Amount:</strong> <span id="remainingAmount"></span></p>
+                </div>
+            </div>
+
+            <form id="updatePaymentForm">
+                <input type="hidden" id="paymentIdInput" name="paymentId">
+                <input type="hidden" id="salesTransactionId" name="salesTransactionId">
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">Payment Type</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="FULL">Full Payment</option>
+                        <option value="INSTALLMENT">Installment</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="method" class="form-label">Payment Method</label>
+                    <input type="text" class="form-control" id="method" name="method" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Update Payment</button>
+                    <a href="paymentHistory.html" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Authentication and utility functions
+        function getAuthHeaders() {
+            const token = localStorage.getItem('jwt');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function redirectLogin() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // Redirect if not logged in
+        redirectLogin();
+
+        // Get payment ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentId = urlParams.get('id');
+
+        if (!paymentId) {
+            alert('Payment ID is required');
+            window.location.href = 'paymentHistory.html';
+        }
+
+        // Variables to store transaction data
+        let payment;
+        let transactionId;
+        let totalAmount = 0;
+        let totalPaid = 0;
+        let remainingAmount = 0;
+        let originalAmount = 0;
+        let hasInstallment = false;
+        let isFullPaymentType = false;
+
+        // Load payment and transaction data
+        async function loadPaymentData() {
+            try {
+                // Fetch the payment being updated
+                const paymentResponse = await fetch(`/api/payments/history/${paymentId}`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!paymentResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${paymentResponse.status}`);
+                }
+
+                payment = await paymentResponse.json();
+                originalAmount = parseFloat(payment.amount);
+                transactionId = payment.salesTransactionId;
+
+                // Populate form with payment data
+                document.getElementById('paymentIdInput').value = payment.id;
+                document.getElementById('paymentId').textContent = payment.id;
+                document.getElementById('salesTransactionId').value = payment.salesTransactionId;
+                document.getElementById('transactionId').textContent = payment.salesTransactionId;
+                document.getElementById('status').value = payment.status;
+                document.getElementById('method').value = payment.method;
+                document.getElementById('amount').value = parseFloat(payment.amount).toFixed(2);
+                document.getElementById('createdAt').textContent = formatDate(payment.createdAt);
+
+                isFullPaymentType = payment.status === 'FULL';
+
+                // Fetch transaction details
+                const txResponse = await fetch(`/api/sales-transactions/${transactionId}`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!txResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${txResponse.status}`);
+                }
+
+                const transaction = await txResponse.json();
+                document.getElementById('transactionStatus').textContent = transaction.status;
+
+                // Calculate total amount from items
+                totalAmount = transaction.items.reduce((sum, item) => {
+                    return sum + (item.price * item.quantity);
+                }, 0);
+
+                // Fetch all payments for this transaction
+                const paymentsResponse = await fetch('/api/payments/history', {
+                    headers: getAuthHeaders()
+                });
+
+                if (!paymentsResponse.ok) {
+                    throw new Error(`HTTP error! Status: ${paymentsResponse.status}`);
+                }
+
+                const allPayments = await paymentsResponse.json();
+
+                // Filter payments for this transaction (excluding the current one being updated)
+                const otherPayments = allPayments.filter(p =>
+                    p.salesTransactionId === transactionId && p.id !== payment.id
+                );
+
+                // Check if there are other installment payments
+                hasInstallment = otherPayments.some(p => p.status === 'INSTALLMENT');
+
+                // Calculate total paid amount (excluding current payment)
+                totalPaid = otherPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+                // Calculate remaining amount (including current payment as it's not paid yet from the perspective of the update)
+                remainingAmount = totalAmount - totalPaid;
+
+                // Update payment summary
+                document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+                document.getElementById('totalPaid').textContent = totalPaid.toFixed(2);
+                document.getElementById('remainingAmount').textContent = remainingAmount.toFixed(2);
+
+                // Set up payment type logic
+                setupPaymentTypeLogic();
+            } catch (error) {
+                console.error('Error loading payment data:', error);
+                alert('Failed to load payment data: ' + error.message);
+                window.location.href = 'paymentHistory.html';
+            }
+        }
+
+        // Set up the payment type dropdown logic
+        function setupPaymentTypeLogic() {
+            // Disable FULL option if there are already installment payments
+            if (hasInstallment && payment.status !== 'FULL') {
+                document.querySelector('#status option[value="FULL"]').disabled = true;
+            }
+
+            // Update amount field based on payment type
+            updateAmountField();
+
+            // Add event listener for payment type changes
+            document.getElementById('status').addEventListener('change', updateAmountField);
+        }
+
+        // Update the amount field based on payment type
+        function updateAmountField() {
+            const paymentStatus = document.getElementById('status').value;
+            const amountInput = document.getElementById('amount');
+
+            if (paymentStatus === 'FULL') {
+                amountInput.value = remainingAmount.toFixed(2);
+                amountInput.readOnly = true;
+                isFullPaymentType = true;
+            } else if (paymentStatus === 'INSTALLMENT') {
+                // If changing from FULL to INSTALLMENT, reset the value
+                if (isFullPaymentType) {
+                    amountInput.value = '';
+                }
+                amountInput.readOnly = false;
+                amountInput.max = remainingAmount;
+                isFullPaymentType = false;
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('updatePaymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const paymentStatus = document.getElementById('status').value;
+            const paymentMethod = document.getElementById('method').value;
+            const paymentAmount = parseFloat(document.getElementById('amount').value);
+
+            // Validate inputs
+            if (!paymentStatus) {
+                alert('Please select a payment type');
+                return;
+            }
+
+            if (!paymentMethod) {
+                alert('Please enter a payment method');
+                return;
+            }
+
+            if (isNaN(paymentAmount) || paymentAmount <= 0) {
+                alert('Please enter a valid payment amount');
+                return;
+            }
+
+            // Validate payment amount based on type
+            if (paymentStatus === 'FULL' && paymentAmount !== remainingAmount) {
+                alert('Full payment amount must match the exact remaining amount: ' + remainingAmount.toFixed(2));
+                return;
+            }
+
+            if (paymentStatus === 'INSTALLMENT' && paymentAmount > remainingAmount) {
+                alert('Installment amount cannot exceed the remaining amount: ' + remainingAmount.toFixed(2));
+                return;
+            }
+
+            // Create payment object
+            const updatedPayment = {
+                salesTransactionId: transactionId,
+                status: paymentStatus,
+                method: paymentMethod,
+                amount: paymentAmount
+            };
+
+            try {
+                // Submit payment update
+                const response = await fetch(`/api/payments/update/${paymentId}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(updatedPayment)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                // Update successful
+                alert('Payment updated successfully!');
+                window.location.href = 'paymentHistory.html';
+            } catch (error) {
+                console.error('Error updating payment:', error);
+                alert('Failed to update payment: ' + error.message);
+            }
+        });
+
+        // Load payment data on page load
+        loadPaymentData();
+    </script>
+</body>
+</html>
