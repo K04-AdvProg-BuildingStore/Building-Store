@@ -160,9 +160,16 @@
             color: #FD3535;
             font-size: 16px;
         }
+
+        .history-icon {
+            color: #BF5300;
+            font-size: 16px;
+        }
+        
         .search-icon {
             color: #3C3C3C;
         }
+        
         .clear-search {
             background: none;
             border: none;
@@ -171,6 +178,7 @@
             margin-right: 10px;
             display: none;
         }
+        
         .no-data {
             text-align: center;
             padding: 20px;
@@ -178,6 +186,24 @@
             font-size: 16px;
             font-family: Poppins;
             font-weight: 500;
+        }
+        
+        .status-toggle {
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .status-active {
+            color: #28a745;
+        }
+        
+        .status-inactive {
+            color: #dc3545;
+        }
+        
+        .status-toggle:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -221,7 +247,6 @@
                 </tbody>
             </table>
         </div>
-
     </div>
 
     <script>
@@ -328,11 +353,15 @@
                 
                 // More robust status detection - check both camelCase and regular case
                 let status;
+                let isActive;
                 if (customer.hasOwnProperty('isActive')) {
-                    status = customer.isActive ? 'Active' : 'Inactive';
+                    isActive = customer.isActive;
+                    status = isActive ? 'Active' : 'Inactive';
                 } else if (customer.hasOwnProperty('active')) {
-                    status = customer.active ? 'Active' : 'Inactive';
+                    isActive = customer.active;
+                    status = isActive ? 'Active' : 'Inactive';
                 } else {
+                    isActive = false;
                     status = 'Unknown';
                 }
                 
@@ -343,8 +372,17 @@
                     <td>${customer.email || 'N/A'}</td>
                     <td>${customer.gender || 'N/A'}</td>
                     <td>${birthday}</td>
-                    <td>${status}</td>
+                    <td>
+                        <span class="status-toggle ${isActive ? 'status-active' : 'status-inactive'}" 
+                              onclick="toggleCustomerStatus('${customer.phoneNumber}', ${!isActive})">
+                            ${status}
+                            <i class="fa-solid fa-rotate ms-1" style="font-size: 12px; margin-left: 5px;"></i>
+                        </span>
+                    </td>
                     <td class="action-buttons">
+                        <div class="action-button" onclick="viewPurchaseHistory('${customer.phoneNumber}')">
+                            <i class="fa-solid fa-clock-rotate-left history-icon"></i>
+                        </div>
                         <div class="action-button" onclick="editCustomer('${customer.phoneNumber}')">
                             <i class="fa-solid fa-pen-to-square edit-icon"></i>
                         </div>
@@ -401,6 +439,11 @@
             window.location.href = `editCustomer.html?phone=${phoneNumber}`;
         }
 
+        // View purchase history
+        function viewPurchaseHistory(phoneNumber) {
+            window.location.href = `purchaseHistory.html?phone=${phoneNumber}`;
+        }
+
         // Add new customer
         document.getElementById('addCustomerBtn').addEventListener('click', function() {
             window.location.href = 'addCustomer.html';
@@ -441,10 +484,48 @@
             window.location.href = 'authenticate.html';
         });
 
-        // Load customers when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchAllCustomers();
-        });
+        // Toggle customer status
+        async function toggleCustomerStatus(phoneNumber, newStatus) {
+            try {
+                const response = await fetch(`/customers/${phoneNumber}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    const customer = await response.json();
+                    
+                    // Update only the status field
+                    const updateData = {
+                        phoneNumber: phoneNumber,
+                        name: customer.name,
+                        isActive: newStatus
+                    };
+                    
+                    const updateResponse = await fetch(`/customers/${phoneNumber}`, {
+                        method: 'PUT',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(updateData)
+                    });
+                    
+                    if (updateResponse.ok) {
+                        // Refresh the current view
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput.value.trim()) {
+                            fetchCustomerByPhone(searchInput.value.trim());
+                        } else {
+                            fetchAllCustomers();
+                        }
+                    } else {
+                        alert('Failed to update customer status');
+                    }
+                } else {
+                    alert('Failed to fetch customer data');
+                }
+            } catch (error) {
+                console.error('Error toggling customer status:', error);
+                alert('Error updating customer status. Please try again.');
+            }
+        }
     </script>
 </body>
 </html>
