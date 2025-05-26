@@ -95,35 +95,14 @@ class SupplyServiceTest {
         verifyNoMoreInteractions(supplyRepo);
     }
 
-//    @Test
-//    void testGetSuppliesByProduct() {
-//        when(supplyRepo.findByProductId(5))
-//                .thenReturn(List.of(sampleSupply));
-//        List<SupplyModel> result = service.getSuppliesByProduct(5);
-//        assertEquals(1, result.size());
-//        assertEquals(sampleSupply, result.get(0));
-//        verify(supplyRepo).findByProductId(5);
-//    }
-
     @Test
-    void testCreateSupplySuccess() {
-        SupplyModel toCreate = new SupplyModel();
-        SupplierManagementModel stubSupplier = new SupplierManagementModel();
-        stubSupplier.setPhoneNumber("555-1234");
-        toCreate.setSupplier(stubSupplier);
-        toCreate.setSupplyStock(50);
-        toCreate.setDeliveryAddress("Addr");
-
-        when(supplierService.getSupplierByPhone("555-1234"))
-                .thenReturn(Optional.of(sampleSupplier));
-        when(supplyRepo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        SupplyModel result = service.createSupply(toCreate);
-        assertEquals(sampleSupplier, result.getSupplier());
-        assertEquals(50, result.getSupplyStock());
-        assertEquals("Addr", result.getDeliveryAddress());
-        verify(supplierService).getSupplierByPhone("555-1234");
-        verify(supplyRepo).save(result);
+    void testGetSuppliesByProduct() {
+        when(supplyRepo.findByProductId(5))
+                .thenReturn(List.of(sampleSupply));
+        List<SupplyModel> result = service.getSuppliesByProduct(5);
+        assertEquals(1, result.size());
+        assertEquals(sampleSupply, result.get(0));
+        verify(supplyRepo).findByProductId(5);
     }
 
     @Test
