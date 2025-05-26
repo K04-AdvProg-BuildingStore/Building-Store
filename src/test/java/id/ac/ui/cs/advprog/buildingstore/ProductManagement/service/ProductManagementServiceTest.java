@@ -75,9 +75,14 @@ public class ProductManagementServiceTest {
     }
 
     @Test
-    void testDeleteProductById() {
-        service.deleteProductById(1);
-        verify(repository, times(1)).deleteById(1);
+    void testDeleteProductById_NotFound() {
+        when(repository.existsById(99)).thenReturn(false);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.deleteProductById(99);
+        });
+
+        assertEquals("Product not found", exception.getMessage());
     }
 
     @Test
