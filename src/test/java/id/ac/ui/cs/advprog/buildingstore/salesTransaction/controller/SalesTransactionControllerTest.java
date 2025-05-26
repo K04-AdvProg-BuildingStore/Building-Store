@@ -19,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -96,5 +97,29 @@ class SalesTransactionControllerTest {
         mockMvc.perform(delete("/api/sales-transactions/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void testGetAllTransactions() throws Exception {
+        when(transactionService.findAll()).thenReturn(List.of(mockTransaction));
+        mockMvc.perform(get("/api/sales-transactions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1));
+    }
+
+    @Test
+    void testGetTransactionFound() throws Exception {
+        when(transactionService.findById(1)).thenReturn(Optional.of(mockTransaction));
+        mockMvc.perform(get("/api/sales-transactions/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void testGetTransactionNotFound() throws Exception {
+        when(transactionService.findById(999)).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/sales-transactions/999"))
+                .andExpect(status().isNotFound());
+    }
+
 }
 
