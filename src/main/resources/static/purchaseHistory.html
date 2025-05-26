@@ -180,66 +180,129 @@
             return urlParams.get('customerId');
         }
 
-        // Fetch customer details
+        // Fetch customer details - now with multiple endpoint fallbacks
         async function fetchCustomerDetails() {
             const customerId = getCustomerIdFromUrl();
             
             if (!customerId) {
-                alert('No customer ID provided');
-                window.location.href = 'customerManagement.html';
+                console.error('No customer ID provided in URL');
+                document.getElementById('customerDetails').innerHTML = 'No customer ID provided';
                 return;
             }
             
-            try {
-                const response = await fetch(`/api/customers/${customerId}`, {
-                    headers: getAuthHeaders()
-                });
-                
-                if (response.ok) {
-                    const customer = await response.json();
-                    displayCustomerDetails(customer);
-                } else {
-                    alert('Failed to fetch customer data');
-                    window.location.href = 'customerManagement.html';
+            console.log('Fetching customer details for ID:', customerId);
+            // Show loading state
+            document.getElementById('customerDetails').innerHTML = `Loading details for Customer ID: ${customerId}...`;
+            
+            // Try different possible API endpoints (in order of likely correctness)
+            const possibleEndpoints = [
+                `/customers/id/${customerId}`,
+                `/api/customers/${customerId}`,
+                `/customers/${customerId}`
+            ];
+            
+            let customer = null;
+            
+            for (const endpoint of possibleEndpoints) {
+                try {
+                    console.log(`Trying endpoint: ${endpoint}`);
+                    const response = await fetch(endpoint, {
+                        headers: getAuthHeaders()
+                    });
+                    
+                    if (response.ok) {
+                        customer = await response.json();
+                        console.log('Customer data retrieved successfully:', customer);
+                        displayCustomerDetails(customer);
+                        break; // Exit loop on success
+                    } else {
+                        console.log(`Endpoint ${endpoint} returned status: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error(`Error with endpoint ${endpoint}:`, error);
                 }
-            } catch (error) {
-                console.error('Error fetching customer data:', error);
-                alert('Failed to fetch customer data');
-                window.location.href = 'customerManagement.html';
             }
+
+            // If customer details couldn't be fetched, don't show an error - we'll try to get
+            // them from the purchase history data instead
+            if (!customer) {
+                console.warn('Could not fetch customer details directly. Will try from purchase history.');
+            }
+
+            // Continue with purchase history
+            fetchPurchaseHistory();
         }
 
         // Display customer details
         function displayCustomerDetails(customer) {
             document.getElementById('customerDetails').innerHTML = `
-                Customer: ${customer.name} (${customer.phoneNumber}) - ID: ${customer.id}
+                Customer: ${customer.name || 'Unknown'} 
+                (${customer.phoneNumber || 'No phone'}) - 
+                ID: ${customer.id || 'Unknown'}
             `;
         }
 
-        // Fetch purchase history
+        // Fetch purchase history with improved error handling
         async function fetchPurchaseHistory() {
             const customerId = getCustomerIdFromUrl();
             
             if (!customerId) {
+                displayNoPurchases('No customer ID provided');
                 return;
             }
             
             try {
                 console.log('Fetching purchase history for customer ID:', customerId);
-                const response = await fetch(`/api/purchase-history/${customerId}`, {
-                    headers: getAuthHeaders()
-                });
                 
-                if (response.ok) {
-                    const purchases = await response.json();
-                    console.log('Purchase history:', purchases);
+                // Try different possible API endpoints for purchase history
+                const possibleEndpoints = [
+                    `/api/purchase-history/${customerId}`,
+                    `/purchase-history/${customerId}`
+                ];
+                
+                let purchases = null;
+                
+                for (const endpoint of possibleEndpoints) {
+                    try {
+                        console.log(`Trying endpoint for purchase history: ${endpoint}`);
+                        const response = await fetch(endpoint, {
+                            headers: getAuthHeaders()
+                        });
+                        
+                        if (response.ok) {
+                            purchases = await response.json();
+                            console.log('Purchase history retrieved:', purchases);
+                            
+                            // Extract customer details from the first purchase history item if available
+                            if (purchases && purchases.length > 0) {
+                                const firstPurchase = purchases[0];
+                                if (firstPurchase.customerId && firstPurchase.customerName) {
+                                    // Update customer details using the data from purchase history
+                                    document.getElementById('customerDetails').innerHTML = `
+                                        Customer: ${firstPurchase.customerName} 
+                                        (${firstPurchase.phoneNumber || 'No phone'}) - 
+                                        ID: ${firstPurchase.customerId}
+                                    `;
+                                    console.log('Customer details extracted from purchase history');
+                                }
+                            }
+                            
+                            break; // Exit loop on success
+                        } else {
+                            console.log(`Endpoint ${endpoint} returned status: ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error with endpoint ${endpoint}:`, error);
+                    }
+                }
+                
+                if (purchases) {
                     displayPurchaseHistory(purchases);
                 } else {
-                    console.error('Failed to fetch purchase history:', response.status);
                     displayNoPurchases('No purchase history found for this customer');
                 }
             } catch (error) {
-                console.error('Error fetching purchase history:', error);
+                console.error('General error fetching purchase history:', error);
                 displayNoPurchases('Error loading purchase history');
             }
         }
@@ -265,14 +328,14 @@
                     <td>${purchase.transactionId}</td>
                     <td>${purchase.productId}</td>
                     <td>${purchase.quantity}</td>
-                    <td>$${purchase.price.toFixed(2)}</td>
-                    <td>$${total.toFixed(2)}</td>
+                    <td>Rp.${purchase.price.toFixed(2)}</td>
+                    <td>Rp.${total.toFixed(2)}</td>
                 `;
                 
                 tableBody.appendChild(row);
             });
             
-            document.getElementById('totalAmount').textContent = `Total: $${totalAmount.toFixed(2)}`;
+            document.getElementById('totalAmount').textContent = `Total: Rp.${totalAmount.toFixed(2)}`;
         }
 
         // Display when no purchases found
@@ -306,10 +369,28 @@
             window.location.href = 'authenticate.html';
         });
 
-        // Load data when page loads
+        // Load data when page loads - separate the API calls
         document.addEventListener('DOMContentLoaded', function() {
+            // Check auth first
+            redirectLogin();
+            
+            // Load customer details only, purchase history will be called after
             fetchCustomerDetails();
-            fetchPurchaseHistory();
+            
+            // Set up logout button
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                const token = localStorage.getItem('jwt');
+                if (!token) {
+                    window.location.href = 'authenticate.html';
+                    return;
+                }
+                await fetch('/api/v1/auth/logout', {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+                localStorage.removeItem('jwt');
+                window.location.href = 'authenticate.html';
+            });
         });
     </script>
 </body>
