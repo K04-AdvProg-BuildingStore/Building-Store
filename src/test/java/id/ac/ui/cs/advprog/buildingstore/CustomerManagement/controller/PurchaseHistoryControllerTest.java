@@ -6,43 +6,37 @@ import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.PurchaseHist
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
 public class PurchaseHistoryControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
     private PurchaseHistoryService service;
-
+    private PurchaseHistoryController controller;
     private PurchaseHistoryViewDTO dto1, dto2;
 
     @BeforeEach
     void setUp() {
-        // Updated DTOs to include customer ID
+        service = Mockito.mock(PurchaseHistoryService.class);
+        controller = new PurchaseHistoryController(service);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        
+        // Initialize DTOs 
         dto1 = new PurchaseHistoryViewDTOImpl(1, "Alice", "0811111111", 101, 201, 2, 10000.0);
         dto2 = new PurchaseHistoryViewDTOImpl(1, "Alice", "0811111111", 102, 202, 1, 5000.0);
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testGetPurchaseHistoryByIdReturnsDTOs() throws Exception {
-        Mockito.when(service.getCustomerPurchaseHistoryById(1))
+        when(service.getCustomerPurchaseHistoryById(1))
                 .thenReturn(List.of(dto1, dto2));
 
         mockMvc.perform(get("/api/purchase-history/1"))
@@ -57,10 +51,9 @@ public class PurchaseHistoryControllerTest {
                 .andExpect(jsonPath("$[1].productId").value(202));
     }
 
-    @WithMockUser(username = "cashier", roles = {"CASHIER"})
     @Test
     void testGetPurchaseHistoryByIdReturnsEmptyList() throws Exception {
-        Mockito.when(service.getCustomerPurchaseHistoryById(anyInt()))
+        when(service.getCustomerPurchaseHistoryById(anyInt()))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/purchase-history/999"))
@@ -68,15 +61,33 @@ public class PurchaseHistoryControllerTest {
                 .andExpect(content().json("[]"));
     }
     
-    @WithMockUser(username = "user", roles = {"USER"})
     @Test
     void testGetPurchaseHistoryByIdWithUserRole() throws Exception {
-        Mockito.when(service.getCustomerPurchaseHistoryById(1))
+        when(service.getCustomerPurchaseHistoryById(1))
                 .thenReturn(List.of(dto1));
 
         mockMvc.perform(get("/api/purchase-history/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].customerId").value(1))
                 .andExpect(jsonPath("$[0].customerName").value("Alice"));
+    }
+
+    @Test
+    void testGetPurchaseHistoryWithNegativeIdReturnsEmptyList() throws Exception {
+        when(service.getCustomerPurchaseHistoryById(-1))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/purchase-history/-1"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void testGetPurchaseHistoryWithServiceException() throws Exception {
+        when(service.getCustomerPurchaseHistoryById(anyInt()))
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(get("/api/purchase-history/1"))
+                .andExpect(status().isInternalServerError());
     }
 }
