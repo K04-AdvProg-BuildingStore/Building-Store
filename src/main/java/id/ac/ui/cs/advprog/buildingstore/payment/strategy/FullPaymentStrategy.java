@@ -29,14 +29,17 @@ public class FullPaymentStrategy implements PaymentStrategy {
 
         String status = salesTransactionService.getStatus(transactionId);
 
-        // Check that transaction is in PENDING status
-        if (!status.equalsIgnoreCase("PENDING")) {
-            throw new IllegalStateException("Payments can only be made to PENDING transactions.");
+        // Check transaction status
+        if (status.equalsIgnoreCase("PAID") || status.equalsIgnoreCase("FULL")) {
+            throw new IllegalStateException("This transaction is already paid in full.");
+        } else if (status.equalsIgnoreCase("PARTIALLY_PAID")) {
+            throw new IllegalStateException("This transaction is already partially paid. Please continue with installment payments.");
         }
 
         // Validate full payment amount
         BigDecimal transactionTotal = salesTransactionService.getTotalAmount(transactionId);
-        if (payment.getAmount().compareTo(transactionTotal) != 0) {
+        if (transactionTotal != null && payment.getAmount() != null &&
+            payment.getAmount().compareTo(transactionTotal) != 0) {
             throw new IllegalArgumentException("Full payment must match the exact transaction amount: " + transactionTotal);
         }
 
