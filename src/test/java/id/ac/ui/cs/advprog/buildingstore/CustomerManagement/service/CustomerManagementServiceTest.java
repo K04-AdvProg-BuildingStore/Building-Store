@@ -4,12 +4,15 @@ import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.CustomerManage
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.CustomerManagementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
 public class CustomerManagementServiceTest {
     
     private CustomerManagementService service;
@@ -268,4 +271,57 @@ public class CustomerManagementServiceTest {
         verify(repository, times(1)).findAll();
     }
 
+
+    @Test
+    void testGetCustomerByPhoneWithEmptyPhone() {
+        Optional<CustomerManagementModel> result = service.getCustomerByPhone("");
+        assertFalse(result.isPresent());
+        verify(repository).findByPhoneNumber("");
+    }
+
+    @Test
+    void testGetCustomerByPhoneWithRepositoryException() {
+        when(repository.findByPhoneNumber(any()))
+                .thenThrow(new RuntimeException("Database error"));
+
+        assertThrows(RuntimeException.class, () -> {
+            service.getCustomerByPhone("08123456789");
+        });
+    }
+
+    @Test
+    void testDeleteCustomerWithRepositoryException() {
+        doThrow(new RuntimeException("Database error"))
+                .when(repository).deleteByPhoneNumber(any());
+
+        assertThrows(RuntimeException.class, () -> {
+            service.deleteCustomerByPhone("08123456789");
+        });
+    }
+
+    @Test
+    void testUpdateCustomerInfoWithRepositoryException() {
+        String phoneNumber = "08123456789";
+        CustomerManagementModel existing = CustomerManagementModel.builder()
+                .phoneNumber(phoneNumber)
+                .name("Old Name")
+                .isActive(true)
+                .build();
+
+        when(repository.findByPhoneNumber(phoneNumber)).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenThrow(new RuntimeException("Database error"));
+
+        assertThrows(RuntimeException.class, () -> {
+            service.updateCustomerInfo(phoneNumber, "New Name", null, null, null, null);
+        });
+    }
+
+    @Test
+    void testGetAllCustomersWithRepositoryException() {
+        when(repository.findAll()).thenThrow(new RuntimeException("Database error"));
+
+        assertThrows(RuntimeException.class, () -> {
+            service.getAllCustomers();
+        });
+    }
 }

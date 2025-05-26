@@ -7,6 +7,7 @@ import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryV
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.model.PurchaseHistoryModel;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.repository.PurchaseHistoryRepository;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,14 +19,28 @@ public class PurchaseHistoryService {
     }
 
     public PurchaseHistoryModel addPurchase(PurchaseHistoryModel purchase) {
-        String phone = purchase.getPhoneNumber();
-        if (phone == null || phone.isBlank()){
+        if (purchase == null) {
             return null;
         }
+        
+        String phone = purchase.getPhoneNumber();
+        if (phone == null || phone.isBlank()) {
+            return null;
+        }
+        
+        // Add validation for negative quantities
+        if (purchase.getQuantity() < 0 || purchase.getTotalAmount() < 0) {
+            return null;
+        }
+        
         return repository.save(purchase);
     }
     
     public List<PurchaseHistoryViewDTO> getCustomerPurchaseHistoryById(Integer customerId) {
+        if (customerId == null) {
+            return new ArrayList<>();
+        }
+        
         List<Object[]> rawList = repository.findFullCustomerPurchaseHistoryByIdRaw(customerId);
         return rawList.stream()
             .map(row -> new PurchaseHistoryViewDTOImpl(

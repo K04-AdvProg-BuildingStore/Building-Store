@@ -2,35 +2,34 @@ package id.ac.ui.cs.advprog.buildingstore.SupplierManagement.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplierManagementModel;
-import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service.SupplierManagementService;
+import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.repository.SupplierManagementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class SupplierManagementControllerTest {
+@AutoConfigureTestDatabase(replace = Replace.ANY)  // uses H2
+class SupplierManagementControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private SupplierManagementService service;
+    @Autowired
+    private SupplierManagementRepository supplierRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -39,36 +38,47 @@ public class SupplierManagementControllerTest {
 
     @BeforeEach
     void setUp() {
+        // clean slate
+        supplierRepository.deleteAll();
+
         supplier = new SupplierManagementModel();
-        supplier.setId(1);
         supplier.setName("PT. Sumber Rejeki");
         supplier.setPhoneNumber("08123456789");
         supplier.setAddress("Jakarta");
         supplier.setActive(true);
+
+        // preload one supplier for GET/PUT/DELETE tests
+        supplier = supplierRepository.save(supplier);
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testAddSupplierSuccess() throws Exception {
-        Mockito.when(service.addSupplier(any())).thenReturn(supplier);
+        // new supplier payload
+        SupplierManagementModel newSup = new SupplierManagementModel();
+        newSup.setName("PT. Baru");
+        newSup.setPhoneNumber("08120000000");
+        newSup.setAddress("Bandung");
+        newSup.setActive(false);
 
         mockMvc.perform(post("/suppliers")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(supplier)))
-                .andDo(print())
+                        .content(objectMapper.writeValueAsString(newSup)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.phoneNumber").value("08123456789"))
-                .andExpect(jsonPath("$.name").value("PT. Sumber Rejeki"));
+                .andExpect(jsonPath("$.phoneNumber").value("08120000000"))
+                .andExpect(jsonPath("$.name").value("PT. Baru"));
+
+        // verify it landed in the DB
+        Optional<SupplierManagementModel> saved =
+                supplierRepository.findByPhoneNumber("08120000000");
+        assertThat(saved).isPresent();
+        assertThat(saved.get().getAddress()).isEqualTo("Bandung");
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testGetSupplierByPhone() throws Exception {
-        Mockito.when(service.getSupplierByPhone("08123456789"))
-                .thenReturn(Optional.of(supplier));
-
-        mockMvc.perform(get("/suppliers/08123456789"))
-                .andDo(print())
+        mockMvc.perform(get("/suppliers/{phone}", supplier.getPhoneNumber()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("PT. Sumber Rejeki"))
                 .andExpect(jsonPath("$.phoneNumber").value("08123456789"));
@@ -77,25 +87,31 @@ public class SupplierManagementControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testUpdateSupplier() throws Exception {
-        Mockito.when(service.updateSupplierInfo(any(), any(), any(), any()))
-                .thenReturn(supplier);
+        // change only address and active flag
+        supplier.setAddress("Surabaya");
+        supplier.setActive(false);
 
-        mockMvc.perform(put("/suppliers/08123456789")
+        mockMvc.perform(put("/suppliers/{phone}", supplier.getPhoneNumber())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(supplier)))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.address").value("Jakarta"))
-                .andExpect(jsonPath("$.active").value(true));
+                .andExpect(jsonPath("$.address").value("Surabaya"))
+                .andExpect(jsonPath("$.active").value(false));
+
+        // DB reflect
+        SupplierManagementModel updated =
+                supplierRepository.findByPhoneNumber(supplier.getPhoneNumber()).get();
+        assertThat(updated.isActive()).isFalse();
+        assertThat(updated.getAddress()).isEqualTo("Surabaya");
     }
 
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testDeleteSupplierByPhone() throws Exception {
-        mockMvc.perform(delete("/suppliers/08123456789"))
-                .andDo(print())
+        mockMvc.perform(delete("/suppliers/{phone}", supplier.getPhoneNumber()))
                 .andExpect(status().isOk());
 
-        verify(service).deleteSupplierByPhone("08123456789");
+        assertThat(supplierRepository.findByPhoneNumber(supplier.getPhoneNumber()))
+                .isEmpty();
     }
 }

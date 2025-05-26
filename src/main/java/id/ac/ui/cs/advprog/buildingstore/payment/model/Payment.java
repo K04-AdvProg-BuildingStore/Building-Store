@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
@@ -38,4 +39,7 @@ public class Payment {
     @JoinColumn(name = "sales_transaction_id", referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "fk_payment_sales_transaction"))
     private Integer salesTransactionId;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
