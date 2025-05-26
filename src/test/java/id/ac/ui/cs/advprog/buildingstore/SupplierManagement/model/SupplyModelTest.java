@@ -34,10 +34,12 @@ public class SupplyModelTest {
     @Test
     void testAllArgsConstructor() {
         SupplierManagementModel supplier = new SupplierManagementModel(2, "Supplier2", "67890", "Addr2", false);
-        SupplyModel supply = new SupplyModel(20, supplier, 75, "Warehouse B");
+        // pass `null` for product since the model's all-args constructor expects (id, supplier, product, supplyStock, deliveryAddress)
+        SupplyModel supply = new SupplyModel(20, supplier, null, 75, "Warehouse B");
 
         assertEquals(20, supply.getId());
         assertEquals(supplier, supply.getSupplier());
+        assertNull(supply.getProduct());
         assertEquals(75, supply.getSupplyStock());
         assertEquals("Warehouse B", supply.getDeliveryAddress());
     }
@@ -46,8 +48,8 @@ public class SupplyModelTest {
     void testEqualsAndHashCode() {
         SupplierManagementModel supplier1 = new SupplierManagementModel(3, "Supplier3", "11111", "Addr3", true);
         SupplierManagementModel supplier2 = new SupplierManagementModel(3, "Supplier3", "11111", "Addr3", true);
-        SupplyModel s1 = new SupplyModel(30, supplier1, 100, "Warehouse C");
-        SupplyModel s2 = new SupplyModel(30, supplier2, 100, "Warehouse C");
+        SupplyModel s1 = new SupplyModel(30, supplier1, null, 100, "Warehouse C");
+        SupplyModel s2 = new SupplyModel(30, supplier2, null, 100, "Warehouse C");
 
         assertEquals(s1, s2);
         assertEquals(s1.hashCode(), s2.hashCode());
@@ -56,10 +58,11 @@ public class SupplyModelTest {
     @Test
     void testToStringContainsAllFields() {
         SupplierManagementModel supplier = new SupplierManagementModel(4, "Supplier4", "22222", "Addr4", true);
-        SupplyModel supply = new SupplyModel(40, supplier, 150, "Warehouse D");
+        SupplyModel supply = new SupplyModel(40, supplier, null, 150, "Warehouse D");
         String str = supply.toString();
+
         assertTrue(str.contains("id=40"));
-        assertTrue(str.contains("supplier="));
+        assertTrue(str.contains("supplier=" + supplier.toString()));
         assertTrue(str.contains("supplyStock=150"));
         assertTrue(str.contains("deliveryAddress=Warehouse D"));
     }
