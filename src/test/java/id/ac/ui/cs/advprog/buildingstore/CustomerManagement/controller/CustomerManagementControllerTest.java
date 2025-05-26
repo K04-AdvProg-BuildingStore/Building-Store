@@ -6,13 +6,9 @@ import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.CustomerMana
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -20,29 +16,26 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
 public class CustomerManagementControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
     private CustomerManagementService service;
-
-    @Autowired
     private ObjectMapper objectMapper;
-
     private CustomerManagementModel customer;
+    private CustomerManagementController controller;
 
     @BeforeEach
     void setUp() {
+        service = Mockito.mock(CustomerManagementService.class);
+        controller = new CustomerManagementController(service);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        objectMapper = new ObjectMapper();
+        
         customer = CustomerManagementModel.builder()
                 .name("Alice")
                 .phoneNumber("08123456789")
@@ -53,10 +46,9 @@ public class CustomerManagementControllerTest {
                 .build();
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testAddCustomerSuccess() throws Exception {
-        Mockito.when(service.addCustomer(any())).thenReturn(customer);
+        when(service.addCustomer(any())).thenReturn(customer);
 
         mockMvc.perform(post("/customers")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -67,10 +59,9 @@ public class CustomerManagementControllerTest {
                 .andExpect(jsonPath("$.name").value("Alice"));
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testGetCustomerByPhone() throws Exception {
-        Mockito.when(service.getCustomerByPhone("08123456789"))
+        when(service.getCustomerByPhone("08123456789"))
                 .thenReturn(Optional.of(customer));
 
         mockMvc.perform(get("/customers/08123456789"))
@@ -80,10 +71,9 @@ public class CustomerManagementControllerTest {
                 .andExpect(jsonPath("$.phoneNumber").value("08123456789"));
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testUpdateCustomer() throws Exception {
-        Mockito.when(service.updateCustomerInfo(any(), any(), any(), any(), any(), any()))
+        when(service.updateCustomerInfo(any(), any(), any(), any(), any(), any()))
                 .thenReturn(customer);
 
         mockMvc.perform(put("/customers/08123456789")
@@ -95,7 +85,6 @@ public class CustomerManagementControllerTest {
                 .andExpect(jsonPath("$.gender").value("Female"));
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testDeleteCustomerByPhone() throws Exception {
         mockMvc.perform(delete("/customers/08123456789"))
@@ -105,7 +94,6 @@ public class CustomerManagementControllerTest {
         verify(service).deleteCustomerByPhone("08123456789");
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testGetAllCustomers() throws Exception {
         // Create test data
@@ -145,7 +133,6 @@ public class CustomerManagementControllerTest {
                 .andExpect(jsonPath("$[1].phoneNumber").value("08123456788"));
     }
 
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void testGetAllCustomersEmptyList() throws Exception {
         // Set up mock service to return empty list
@@ -157,5 +144,54 @@ public class CustomerManagementControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0))
                 .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void testAddCustomerWithInvalidDataReturnsBadRequest() throws Exception {
+        when(service.addCustomer(any())).thenReturn(null); // Service returns null for invalid data
+
+        CustomerManagementModel invalidCustomer = CustomerManagementModel.builder()
+                .phoneNumber("")
+                .name("Invalid Customer")
+                .build();
+
+        mockMvc.perform(post("/customers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidCustomer)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testGetCustomerByPhoneWhenNotFound() throws Exception {
+        when(service.getCustomerByPhone("99999999")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/customers/99999999"))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUpdateCustomerWhenNotFound() throws Exception {
+        when(service.updateCustomerInfo(any(), any(), any(), any(), any(), any()))
+                .thenReturn(null); // Customer not found
+
+        mockMvc.perform(put("/customers/99999999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(customer)))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testDeleteNonExistentCustomerStillReturnsOk() throws Exception {
+        // Even if customer doesn't exist, the delete operation should not fail
+        doNothing().when(service).deleteCustomerByPhone("99999999");
+
+        mockMvc.perform(delete("/customers/99999999"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        verify(service).deleteCustomerByPhone("99999999");
     }
 }

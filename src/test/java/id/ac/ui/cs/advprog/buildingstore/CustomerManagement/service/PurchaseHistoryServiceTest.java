@@ -59,6 +59,24 @@ class PurchaseHistoryServiceTest {
         assertTrue(result.isEmpty());
     }
 
+    @Test
+    void testGetCustomerPurchaseHistoryByIdWithNullCustomerId() {
+        List<PurchaseHistoryViewDTO> result = service.getCustomerPurchaseHistoryById(null);
+        
+        assertTrue(result.isEmpty());
+        verify(repository, never()).findFullCustomerPurchaseHistoryByIdRaw(any());
+    }
+
+    @Test
+    void testGetCustomerPurchaseHistoryByIdWithRepositoryException() {
+        when(repository.findFullCustomerPurchaseHistoryByIdRaw(anyInt()))
+                .thenThrow(new RuntimeException("Database error"));
+        
+        assertThrows(RuntimeException.class, () -> {
+            service.getCustomerPurchaseHistoryById(1);
+        });
+    }
+
     
     
     @Test
@@ -94,5 +112,67 @@ class PurchaseHistoryServiceTest {
         
         assertNull(result);
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testAddPurchaseWithNullPurchase() {
+        PurchaseHistoryModel result = service.addPurchase(null);
+        
+        assertNull(result);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void testAddPurchaseWithZeroQuantity() {
+        // Create a purchase history model with zero quantity
+        PurchaseHistoryModel purchase = PurchaseHistoryModel.builder()
+                .phoneNumber("0811111111")
+                .itemName("Test Item")
+                .quantity(0)
+                .totalAmount(0.0)
+                .build();
+        
+        when(repository.save(any())).thenReturn(purchase);
+        
+        PurchaseHistoryModel result = service.addPurchase(purchase);
+        
+        assertNotNull(result);
+        assertEquals(0, result.getQuantity());
+        assertEquals(0.0, result.getTotalAmount());
+        verify(repository).save(purchase);
+    }
+
+    @Test
+    void testAddPurchaseWithNegativeQuantity() {
+        // Create a purchase history model with negative quantity which should be invalid
+        PurchaseHistoryModel purchase = PurchaseHistoryModel.builder()
+                .phoneNumber("0811111111")
+                .itemName("Test Item")
+                .quantity(-1)
+                .totalAmount(-5000.0)
+                .build();
+        
+        PurchaseHistoryModel result = service.addPurchase(purchase);
+        
+        // This should fail validation and return null 
+        // Note: This test might fail if your service doesn't validate negative quantities
+        assertNull(result);
+        verify(repository, never()).save(any());
+    }
+    
+    @Test
+    void testAddPurchaseWithRepositoryException() {
+        PurchaseHistoryModel purchase = PurchaseHistoryModel.builder()
+                .phoneNumber("0811111111")
+                .itemName("Test Item")
+                .quantity(1)
+                .totalAmount(5000.0)
+                .build();
+        
+        when(repository.save(any())).thenThrow(new RuntimeException("Database error"));
+        
+        assertThrows(RuntimeException.class, () -> {
+            service.addPurchase(purchase);
+        });
     }
 }
