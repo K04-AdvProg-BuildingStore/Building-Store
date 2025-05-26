@@ -2,14 +2,135 @@
 <html>
 <head>
     <title>Authenticate</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+            font-family: Arial, sans-serif;
+        }
+        .auth-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+        .auth-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            padding: 40px 32px;
+        }
+        .auth-content {
+            width: 100%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .auth-logo {
+            width: 220px;
+            max-width: 80%;
+            margin-bottom: 40px;
+            display: block;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .auth-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .auth-form label {
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .auth-form input[type="text"],
+        .auth-form input[type="password"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+        .auth-form button {
+            width: 100%;
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .auth-form button:hover {
+            background: #333;
+        }
+        .auth-right {
+            flex: 1;
+            background: #f7f7f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .auth-right img {
+            width: 100%;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+            max-width: none;
+        }
+        @media (max-width: 900px) {
+            .auth-container { flex-direction: column; }
+            .auth-left, .auth-right { flex: unset; width: 100vw; height: 50vh; }
+            .auth-right img { height: 50vh; }
+        }
+        @media (max-width: 600px) {
+            .auth-container { flex-direction: column; }
+            .auth-left, .auth-right { height: auto; min-height: 220px; }
+            .auth-logo { width: 150px; margin-bottom: 24px; }
+        }
+    </style>
 </head>
 <body>
-<h2>Login</h2>
-<form id="loginForm">
-    Username: <input type="text" id="username" required><br>
-    Password: <input type="password" id="password" required><br>
-    <button type="submit">Login</button>
-</form>
+<div class="auth-container">
+    <div class="auth-left">
+        <div class="auth-content">
+            <img src="/images/BSStore_Font.png" alt="BS Store Logo Font" class="auth-logo">
+            <form id="loginForm" class="auth-form">
+                <div>
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div style="margin-top: -10px; margin-bottom: 10px; font-size: 0.98em;">
+                    No account? <a href="register.html">Register here.</a>
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+    </div>
+    <div class="auth-right">
+        <img src="/images/BSStore_BigImage.png" alt="BS Store" />
+    </div>
+</div>
 <script>
     document.getElementById('loginForm').onsubmit = async function(e) {
         e.preventDefault();

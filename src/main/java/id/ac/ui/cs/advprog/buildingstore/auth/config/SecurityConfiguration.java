@@ -30,6 +30,7 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/authenticate",
                                 "/*.html",
                                 "/css/**",
+                                "/images/**",
                                 "/actuator/prometheus",
                                 "/js/**"
                         ).permitAll()
