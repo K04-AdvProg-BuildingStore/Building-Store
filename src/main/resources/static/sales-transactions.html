@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Sales Transactions</title>
     <style>
         body { font-family: Arial, sans-serif; }
@@ -18,29 +19,89 @@
             padding: 8px;
             text-align: left;
         }
-        th { background: #f4f4f4; }
+        th { background: #d62828; color: white; }
         button { margin: 0 2px; }
+        .oval-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .oval-btn.orange {
+            background: #f77f00;
+            color: white;
+        }
+        .oval-btn.gray {
+            background: #ccc;
+            color: #333;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0 2px;
+            padding: 4px 8px;
+        }
+        .icon-btn:focus {
+            outline: 2px solid #f77f00;
+        }
+        .center-header {
+            text-align: center;
+            margin: 20px 0 10px 0;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.95em;
+            margin: 0 2px;
+        }
+        .status-pending {
+            background: #e0f0ff;
+            color: #1976d2;
+        }
+        .status-paid {
+            background: #d4f8e8;
+            color: #218838;
+        }
     </style>
 </head>
 <body>
-<div class="top-bar">
-    <button onclick="createTransaction()">Create</button>
+<div id="navbar-container"></div>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; margin-bottom: 10px; padding: 0 40px;">
+    <h1 class="center-header" style="margin: 0; text-align: left; flex: 1;">Sales Transaction</h1>
+    <button class="oval-btn orange" style="margin-left: 20px;" onclick="createTransaction()">+ Create</button>
 </div>
-<table id="transactionsTable">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Customer ID</th>
-        <th>Status</th>
-        <th>Cashier Username</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    <!-- Transactions will be populated here -->
-    </tbody>
-</table>
-
+<div style="margin-bottom: 20px; padding: 0 40px;">
+    <form id="searchForm" style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="searchInput" placeholder="Search by Cashier or Transaction ID..." style="flex: 1; padding: 8px;">
+        <button type="submit" style="background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0 10px;">🔍</button>
+        <button type="button" class="oval-btn gray" onclick="resetSearch()">Reset</button>
+    </form>
+</div>
+<div style="padding: 0 40px;">
+    <table id="transactionsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Customer ID</th>
+            <th>Status</th>
+            <th>Cashier Username</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Transactions will be populated here -->
+        </tbody>
+    </table>
+</div>
 <script>
     function getAuthHeaders() {
         const token = localStorage.getItem('jwt');
@@ -66,18 +127,26 @@
         tbody.innerHTML = '';
         transactions.forEach(tx => {
             const isPending = tx.status === 0 || tx.status === 'PENDING';
+            const isPaid = tx.status === 1 || tx.status === 'PAID';
             const tr = document.createElement('tr');
-            tr.setAttribute('data-id', tx.id); // Add this line
+            tr.setAttribute('data-id', tx.id);
+            let statusHtml = '';
+            if (isPending) {
+                statusHtml = '<span class="status-badge status-pending">Pending</span>';
+            } else if (isPaid) {
+                statusHtml = '<span class="status-badge status-paid">Paid</span>';
+            } else {
+                statusHtml = `<span>${tx.status}</span>`;
+            }
             tr.innerHTML = `
         <td>${tx.id}</td>
         <td>${tx.customerId}</td>
-        <td>${tx.status}</td>
+        <td>${statusHtml}</td>
         <td>${tx.cashierUsername || ''}</td>
         <td>
-            <button onclick="updateTransaction(${tx.id})">Update</button>
-            <button onclick="deleteTransaction(${tx.id})">Delete</button>
-            ${isPending ? `<button onclick="payTransaction(${tx.id})">Pay</button>` : ''}
-
+            <button class="icon-btn" title="Update" onclick="updateTransaction(${tx.id})">✏️</button>
+            <button class="icon-btn" title="Delete" onclick="deleteTransaction(${tx.id})">🗑️</button>
+            ${isPending ? `<button class="oval-btn orange" onclick="payTransaction(${tx.id})">Pay</button>` : ''}
         </td>
     `;
             tbody.appendChild(tr);
@@ -117,8 +186,37 @@
         }
     }
 
-    // Initial load
+    redirectLogin()
+    fetch('navbar.html')
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('navbar-container').innerHTML = html;
+        });
     fetchTransactions();
+
+    // Filter table rows based on search input (by Cashier or Transaction ID)
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#transactionsTable tbody tr');
+        rows.forEach(row => {
+            const id = row.children[0].textContent.toLowerCase();
+            const cashier = row.children[3].textContent.toLowerCase();
+            if (id.includes(query) || cashier.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Reset search and show all rows
+    function resetSearch() {
+        document.getElementById('searchInput').value = '';
+        const rows = document.querySelectorAll('#transactionsTable tbody tr');
+        rows.forEach(row => row.style.display = '');
+    }
 </script>
 </body>
 </html>
+
