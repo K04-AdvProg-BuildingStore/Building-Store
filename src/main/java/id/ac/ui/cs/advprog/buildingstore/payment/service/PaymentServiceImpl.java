@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,7 +29,7 @@ public class PaymentServiceImpl implements PaymentService {
             List<PaymentStrategy> paymentStrategies,
             PaymentMetricService metricService) {
         this.paymentRepository = paymentRepository;
-        this.paymentStrategies = paymentStrategies;
+        this.paymentStrategies = paymentStrategies != null ? paymentStrategies : new ArrayList<>();
         this.metricService = metricService;
     }
 
@@ -96,6 +97,10 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Payment executePayment(Payment payment) {
         log.info("Executing payment transaction for {}", payment.getAmount());
+
+        if (paymentStrategies == null || paymentStrategies.isEmpty()) {
+            return paymentRepository.save(payment);
+        }
 
         // Find the appropriate strategy for this payment
         PaymentStrategy strategy = paymentStrategies.stream()

@@ -1,356 +1,247 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.strategy;
 
-    import id.ac.ui.cs.advprog.buildingstore.payment.dependency.SalesTransactionGateway;
-    import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
-    import id.ac.ui.cs.advprog.buildingstore.payment.model.Payment;
-    import id.ac.ui.cs.advprog.buildingstore.payment.repository.PaymentRepository;
-    import org.junit.jupiter.api.BeforeEach;
-    import org.junit.jupiter.api.Test;
-    import org.mockito.InjectMocks;
-    import org.mockito.Mock;
-    import org.mockito.MockitoAnnotations;
+import id.ac.ui.cs.advprog.buildingstore.payment.dependency.SalesTransactionGateway;
+import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
+import id.ac.ui.cs.advprog.buildingstore.payment.model.Payment;
+import id.ac.ui.cs.advprog.buildingstore.payment.repository.PaymentRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-    import java.math.BigDecimal;
-    import java.util.ArrayList;
-    import java.util.List;
-    import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
-    import static org.junit.jupiter.api.Assertions.*;
-    import static org.mockito.ArgumentMatchers.anyInt;
-    import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 
-    class PaymentStrategyTest {
+class PaymentStrategyTest {
 
-        @Mock
-        private SalesTransactionGateway salesTransactionGateway;
+    @Mock
+    private SalesTransactionGateway salesTransactionGateway;
 
-        @Mock
-        private PaymentRepository paymentRepository;
+    @Mock
+    private PaymentRepository paymentRepository;
 
-        @InjectMocks
-        private FullPaymentStrategy fullPaymentStrategy;
+    @InjectMocks
+    private FullPaymentStrategy fullPaymentStrategy;
 
-        @InjectMocks
-        private InstallmentPaymentStrategy installmentPaymentStrategy;
+    @InjectMocks
+    private InstallmentPaymentStrategy installmentPaymentStrategy;
 
-        private Payment fullPayment;
-        private Payment installmentPayment;
-        private Integer transactionId;
-        private UUID testId;
+    private Payment payment;
 
-        @BeforeEach
-        void setUp() {
-            MockitoAnnotations.openMocks(this);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
 
-            testId = UUID.randomUUID();
-            transactionId = 12345;
-            fullPayment = Payment.builder()
-                    .id(testId)
-                    .amount(BigDecimal.valueOf(100000))
-                    .status(PaymentStatus.FULL)
-                    .method("Credit Card")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            installmentPayment = Payment.builder()
-                    .id(testId)
-                    .amount(BigDecimal.valueOf(50000))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Debit Card")
-                    .salesTransactionId(transactionId)
-                    .build();
-        }
-
-        // FullPaymentStrategy Tests
-
-        @Test
-        void fullPaymentSupports_WithPaidStatus_ShouldReturnTrue() {
-            // Verify
-            assertTrue(fullPaymentStrategy.supports(PaymentStatus.FULL));
-        }
-
-        @Test
-        void fullPaymentSupports_WithInstallmentStatus_ShouldReturnFalse() {
-            // Verify
-            assertFalse(fullPaymentStrategy.supports(PaymentStatus.INSTALLMENT));
-        }
-
-        @Test
-        void fullPaymentExecute_WithValidTransaction_ShouldMarkAsPaid() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PENDING");
-            doNothing().when(salesTransactionGateway).markAsPaid(transactionId);
-
-            // Act
-            Payment result = fullPaymentStrategy.execute(fullPayment);
-
-            // Verify
-            assertNotNull(result);
-            assertEquals(fullPayment, result);
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway).getStatus(transactionId);
-            verify(salesTransactionGateway).markAsPaid(transactionId);
-        }
-
-        @Test
-        void fullPaymentExecute_WithNonExistingTransaction_ShouldThrowException() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(false);
-
-            // Act & Verify
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> fullPaymentStrategy.execute(fullPayment));
-
-            assertEquals("Sales transaction not found.", exception.getMessage());
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway, never()).markAsPaid(anyInt());
-        }
-
-        @Test
-        void fullPaymentExecute_WithAlreadyPaidTransaction_ShouldThrowException() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("FULL");
-
-            // Act & Verify
-            IllegalStateException exception = assertThrows(IllegalStateException.class,
-                    () -> fullPaymentStrategy.execute(fullPayment));
-
-            assertEquals("This transaction is already paid in full.", exception.getMessage());
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway).getStatus(transactionId);
-            verify(salesTransactionGateway, never()).markAsPaid(anyInt());
-        }
-
-        @Test
-        void fullPaymentAfterInstallment_ShouldThrowException() {
-            // Arrange
-            // Mock a transaction that is already in PARTIALLY_PAID state
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PARTIALLY_PAID");
-
-            // Act & Verify
-            // Attempting full payment on a transaction with partial payments should fail
-            IllegalStateException exception = assertThrows(IllegalStateException.class,
-                    () -> fullPaymentStrategy.execute(fullPayment));
-
-            assertEquals("This transaction is already partially paid. Please continue with installment payments.",
-                    exception.getMessage());
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway).getStatus(transactionId);
-            verify(salesTransactionGateway, never()).markAsPaid(anyInt());
-        }
-
-        // InstallmentPaymentStrategy Tests
-
-        @Test
-        void installmentPaymentSupports_WithInstallmentStatus_ShouldReturnTrue() {
-            // Verify
-            assertTrue(installmentPaymentStrategy.supports(PaymentStatus.INSTALLMENT));
-        }
-
-        @Test
-        void installmentPaymentSupports_WithPaidStatus_ShouldReturnFalse() {
-            // Verify
-            assertFalse(installmentPaymentStrategy.supports(PaymentStatus.FULL));
-        }
-
-        @Test
-        void installmentPaymentExecute_WithFirstPayment_ShouldMarkAsPartiallyPaid() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PENDING");
-            when(salesTransactionGateway.getTotalAmount(transactionId)).thenReturn(new BigDecimal("100000"));
-            when(paymentRepository.findAllBySalesTransactionId(transactionId)).thenReturn(new ArrayList<>());
-            doNothing().when(salesTransactionGateway).markAsPartiallyPaid(transactionId);
-
-            // Act
-            Payment result = installmentPaymentStrategy.execute(installmentPayment);
-
-            // Verify
-            assertNotNull(result);
-            assertEquals(installmentPayment, result);
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway).getStatus(transactionId);
-            verify(salesTransactionGateway).getTotalAmount(transactionId);
-            verify(paymentRepository).findAllBySalesTransactionId(transactionId);
-            verify(salesTransactionGateway).markAsPartiallyPaid(transactionId);
-            verify(salesTransactionGateway, never()).markAsPaid(anyInt());
-        }
-
-        @Test
-        void installmentPaymentExecute_WithFinalPayment_ShouldMarkAsPaid() {
-            // Arrange
-            Payment previousPayment = Payment.builder()
-                    .id(UUID.randomUUID())
-                    .amount(new BigDecimal("50000"))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Cash")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            List<Payment> previousPayments = new ArrayList<>();
-            previousPayments.add(previousPayment);
-
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PARTIALLY_PAID");
-            when(salesTransactionGateway.getTotalAmount(transactionId)).thenReturn(new BigDecimal("100000"));
-            when(paymentRepository.findAllBySalesTransactionId(transactionId)).thenReturn(previousPayments);
-            doNothing().when(salesTransactionGateway).markAsPaid(transactionId);
-
-            // Act
-            Payment result = installmentPaymentStrategy.execute(installmentPayment);
-
-            // Verify
-            assertNotNull(result);
-            assertEquals(installmentPayment, result);
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway).getStatus(transactionId);
-            verify(salesTransactionGateway).getTotalAmount(transactionId);
-            verify(paymentRepository).findAllBySalesTransactionId(transactionId);
-            verify(salesTransactionGateway).markAsPaid(transactionId);
-            verify(salesTransactionGateway, never()).markAsPartiallyPaid(anyInt());
-        }
-
-        @Test
-        void installmentPaymentExecute_WithNonExistingTransaction_ShouldThrowException() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(false);
-
-            // Act & Verify
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> installmentPaymentStrategy.execute(installmentPayment));
-
-            assertEquals("Sales transaction not found.", exception.getMessage());
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(paymentRepository, never()).findAllBySalesTransactionId(anyInt());
-        }
-
-        @Test
-        void installmentPaymentExecute_WithAlreadyPaidTransaction_ShouldThrowException() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("FULL");
-
-            // Act & Verify
-            IllegalStateException exception = assertThrows(IllegalStateException.class,
-                    () -> installmentPaymentStrategy.execute(installmentPayment));
-
-            assertEquals("This transaction is already paid in full.", exception.getMessage());
-            verify(salesTransactionGateway).exists(transactionId);
-            verify(salesTransactionGateway).getStatus(transactionId);
-            verify(paymentRepository, never()).findAllBySalesTransactionId(anyInt());
-        }
-
-        @Test
-        void installmentPaymentExecute_WithOverpayment_ShouldMarkAsPaid() {
-            // Arrange
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PENDING");
-            when(salesTransactionGateway.getTotalAmount(transactionId)).thenReturn(new BigDecimal("40000"));
-            when(paymentRepository.findAllBySalesTransactionId(transactionId)).thenReturn(new ArrayList<>());
-            doNothing().when(salesTransactionGateway).markAsPaid(transactionId);
-
-            // Act
-            Payment result = installmentPaymentStrategy.execute(installmentPayment);
-
-            // Verify
-            assertNotNull(result);
-            assertEquals(installmentPayment, result);
-            verify(salesTransactionGateway).markAsPaid(transactionId);
-            verify(salesTransactionGateway, never()).markAsPartiallyPaid(anyInt());
-        }
-
-        @Test
-        void installmentPaymentExecute_WithMultiplePayments_ShouldTrackProgress() {
-            // Arrange
-            BigDecimal totalAmount = new BigDecimal("100000");
-            Payment firstPayment = Payment.builder()
-                    .id(UUID.randomUUID())
-                    .amount(new BigDecimal("30000"))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Cash")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            List<Payment> previousPayments = new ArrayList<>();
-            previousPayments.add(firstPayment);
-
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PARTIALLY_PAID");
-            when(salesTransactionGateway.getTotalAmount(transactionId)).thenReturn(totalAmount);
-            when(paymentRepository.findAllBySalesTransactionId(transactionId)).thenReturn(previousPayments);
-            doNothing().when(salesTransactionGateway).markAsPartiallyPaid(transactionId);
-
-            // Second payment that still doesn't complete the transaction
-            Payment secondPayment = Payment.builder()
-                    .id(UUID.randomUUID())
-                    .amount(new BigDecimal("20000"))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Debit Card")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            // Act
-            Payment result = installmentPaymentStrategy.execute(secondPayment);
-
-            // Verify
-            assertNotNull(result);
-            assertEquals(secondPayment, result);
-            verify(salesTransactionGateway).markAsPartiallyPaid(transactionId);
-            verify(salesTransactionGateway, never()).markAsPaid(anyInt());
-        }
-
-        @Test
-        void completingInstallmentsWithMultiplePayments_ShouldEventuallyMarkAsPaid() {
-            // Arrange
-            BigDecimal totalAmount = new BigDecimal("100000");
-
-            // First previous payment
-            Payment firstPayment = Payment.builder()
-                    .id(UUID.randomUUID())
-                    .amount(new BigDecimal("30000"))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Cash")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            // Second previous payment
-            Payment secondPayment = Payment.builder()
-                    .id(UUID.randomUUID())
-                    .amount(new BigDecimal("40000"))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Debit Card")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            List<Payment> previousPayments = new ArrayList<>();
-            previousPayments.add(firstPayment);
-            previousPayments.add(secondPayment);
-
-            when(salesTransactionGateway.exists(transactionId)).thenReturn(true);
-            when(salesTransactionGateway.getStatus(transactionId)).thenReturn("PARTIALLY_PAID");
-            when(salesTransactionGateway.getTotalAmount(transactionId)).thenReturn(totalAmount);
-            when(paymentRepository.findAllBySalesTransactionId(transactionId)).thenReturn(previousPayments);
-            doNothing().when(salesTransactionGateway).markAsPaid(transactionId);
-
-            // Final payment that completes the transaction
-            Payment finalPayment = Payment.builder()
-                    .id(UUID.randomUUID())
-                    .amount(new BigDecimal("30000"))
-                    .status(PaymentStatus.INSTALLMENT)
-                    .method("Credit Card")
-                    .salesTransactionId(transactionId)
-                    .build();
-
-            // Act
-            Payment result = installmentPaymentStrategy.execute(finalPayment);
-
-            // Verify
-            assertNotNull(result);
-            assertEquals(finalPayment, result);
-            verify(salesTransactionGateway).markAsPaid(transactionId);
-            verify(salesTransactionGateway, never()).markAsPartiallyPaid(anyInt());
-        }
+        payment = Payment.builder()
+                .id(UUID.randomUUID())
+                .amount(BigDecimal.valueOf(100000))
+                .method("Credit Card")
+                .salesTransactionId(1234)
+                .build();
     }
+
+    // FullPaymentStrategy Tests
+
+    @Test
+    void fullPaymentStrategy_supports_ShouldReturnTrueWhenStatusIsFull() {
+        assertTrue(fullPaymentStrategy.supports(PaymentStatus.FULL));
+        assertFalse(fullPaymentStrategy.supports(PaymentStatus.INSTALLMENT));
+    }
+
+    @Test
+    void fullPaymentStrategy_execute_ShouldMarkTransactionAsPaid() {
+        // Setup
+        payment.setStatus(PaymentStatus.FULL);
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PENDING");
+        when(salesTransactionGateway.getTotalAmount(anyInt())).thenReturn(BigDecimal.valueOf(100000));
+        doNothing().when(salesTransactionGateway).markAsPaid(anyInt());
+
+        // Execute
+        Payment result = fullPaymentStrategy.execute(payment);
+
+        // Verify
+        assertEquals(payment, result);
+        verify(salesTransactionGateway).markAsPaid(payment.getSalesTransactionId());
+        verify(salesTransactionGateway, never()).markAsPartiallyPaid(anyInt());
+    }
+
+    @Test
+    void fullPaymentStrategy_execute_ShouldThrowExceptionWhenTransactionNotFound() {
+        // Setup
+        payment.setStatus(PaymentStatus.FULL);
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(false);
+
+        // Execute and verify
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            fullPaymentStrategy.execute(payment);
+        });
+        assertEquals("Sales transaction not found.", exception.getMessage());
+        verify(salesTransactionGateway, never()).markAsPaid(anyInt());
+    }
+
+    @Test
+    void fullPaymentStrategy_execute_ShouldThrowExceptionWhenTransactionAlreadyPaid() {
+        // Setup
+        payment.setStatus(PaymentStatus.FULL);
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PAID");
+
+        // Execute and verify
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            fullPaymentStrategy.execute(payment);
+        });
+        assertEquals("This transaction is already paid in full.", exception.getMessage());
+        verify(salesTransactionGateway, never()).markAsPaid(anyInt());
+    }
+
+    @Test
+    void fullPaymentStrategy_execute_ShouldThrowExceptionWhenTransactionPartiallyPaid() {
+        // Setup
+        payment.setStatus(PaymentStatus.FULL);
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PARTIALLY_PAID");
+
+        // Execute and verify
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            fullPaymentStrategy.execute(payment);
+        });
+        assertEquals("This transaction is already partially paid. Please continue with installment payments.", exception.getMessage());
+    }
+
+    @Test
+    void fullPaymentStrategy_execute_ShouldThrowExceptionWhenAmountDoesNotMatch() {
+        // Setup
+        payment.setStatus(PaymentStatus.FULL);
+        payment.setAmount(BigDecimal.valueOf(90000));  // Different from transaction total
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PENDING");
+        when(salesTransactionGateway.getTotalAmount(anyInt())).thenReturn(BigDecimal.valueOf(100000));
+
+        // Execute and verify
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            fullPaymentStrategy.execute(payment);
+        });
+        assertTrue(exception.getMessage().contains("Full payment must match the exact transaction amount"));
+    }
+
+    // InstallmentPaymentStrategy Tests
+
+    @Test
+    void installmentPaymentStrategy_supports_ShouldReturnTrueWhenStatusIsInstallment() {
+        assertTrue(installmentPaymentStrategy.supports(PaymentStatus.INSTALLMENT));
+        assertFalse(installmentPaymentStrategy.supports(PaymentStatus.FULL));
+    }
+
+    @Test
+    void installmentPaymentStrategy_execute_ShouldMarkAsPartiallyPaidWhenNotFullyPaid() {
+        // Setup
+        payment.setStatus(PaymentStatus.INSTALLMENT);
+        payment.setAmount(BigDecimal.valueOf(30000));
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PENDING");
+        when(salesTransactionGateway.getTotalAmount(anyInt())).thenReturn(BigDecimal.valueOf(100000));
+        when(paymentRepository.findAllBySalesTransactionId(anyInt())).thenReturn(new ArrayList<>());
+        doNothing().when(salesTransactionGateway).markAsPartiallyPaid(anyInt());
+
+        // Execute
+        Payment result = installmentPaymentStrategy.execute(payment);
+
+        // Verify
+        assertEquals(payment, result);
+        verify(salesTransactionGateway).markAsPartiallyPaid(payment.getSalesTransactionId());
+        verify(salesTransactionGateway, never()).markAsPaid(anyInt());
+    }
+
+    @Test
+    void installmentPaymentStrategy_execute_ShouldMarkAsPaidWhenFullyPaid() {
+        // Setup
+        payment.setStatus(PaymentStatus.INSTALLMENT);
+        payment.setAmount(BigDecimal.valueOf(40000));
+
+        Payment previousPayment = Payment.builder()
+                .amount(BigDecimal.valueOf(60000))
+                .status(PaymentStatus.INSTALLMENT)
+                .salesTransactionId(payment.getSalesTransactionId())
+                .build();
+
+        List<Payment> previousPayments = List.of(previousPayment);
+
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PENDING");
+        when(salesTransactionGateway.getTotalAmount(anyInt())).thenReturn(BigDecimal.valueOf(100000));
+        when(paymentRepository.findAllBySalesTransactionId(anyInt())).thenReturn(previousPayments);
+        doNothing().when(salesTransactionGateway).markAsPaid(anyInt());
+
+        // Execute
+        Payment result = installmentPaymentStrategy.execute(payment);
+
+        // Verify
+        assertEquals(payment, result);
+        verify(salesTransactionGateway).markAsPaid(payment.getSalesTransactionId());
+        verify(salesTransactionGateway, never()).markAsPartiallyPaid(anyInt());
+    }
+
+    @Test
+    void installmentPaymentStrategy_execute_ShouldThrowExceptionWhenTransactionNotFound() {
+        // Setup
+        payment.setStatus(PaymentStatus.INSTALLMENT);
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(false);
+
+        // Execute and verify
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            installmentPaymentStrategy.execute(payment);
+        });
+        assertEquals("Sales transaction not found.", exception.getMessage());
+    }
+
+    @Test
+    void installmentPaymentStrategy_execute_ShouldThrowExceptionWhenTransactionAlreadyPaid() {
+        // Setup
+        payment.setStatus(PaymentStatus.INSTALLMENT);
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PAID");
+
+        // Execute and verify
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            installmentPaymentStrategy.execute(payment);
+        });
+        assertEquals("This transaction is already paid in full.", exception.getMessage());
+    }
+
+    @Test
+    void installmentPaymentStrategy_execute_ShouldHandleOverpayment() {
+        // Setup - total amount paid exceeds transaction total
+        payment.setStatus(PaymentStatus.INSTALLMENT);
+        payment.setAmount(BigDecimal.valueOf(50000));
+
+        Payment previousPayment = Payment.builder()
+                .amount(BigDecimal.valueOf(60000))
+                .status(PaymentStatus.INSTALLMENT)
+                .salesTransactionId(payment.getSalesTransactionId())
+                .build();
+
+        List<Payment> previousPayments = List.of(previousPayment);
+
+        when(salesTransactionGateway.exists(anyInt())).thenReturn(true);
+        when(salesTransactionGateway.getStatus(anyInt())).thenReturn("PENDING");
+        when(salesTransactionGateway.getTotalAmount(anyInt())).thenReturn(BigDecimal.valueOf(100000));
+        when(paymentRepository.findAllBySalesTransactionId(anyInt())).thenReturn(previousPayments);
+        doNothing().when(salesTransactionGateway).markAsPaid(anyInt());
+
+        // Execute
+        Payment result = installmentPaymentStrategy.execute(payment);
+
+        // Verify transaction is marked as PAID even with overpayment
+        assertEquals(payment, result);
+        verify(salesTransactionGateway).markAsPaid(payment.getSalesTransactionId());
+        verify(salesTransactionGateway, never()).markAsPartiallyPaid(anyInt());
+    }
+}

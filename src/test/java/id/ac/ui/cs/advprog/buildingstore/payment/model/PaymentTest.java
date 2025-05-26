@@ -1,6 +1,7 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +54,7 @@ class PaymentTest {
         String method = "Debit Card";
         Integer salesTransactionId = 67890;
 
-        Payment payment = new Payment(id, amount, status, method, salesTransactionId);
+        Payment payment = new Payment(id, amount, status, method, salesTransactionId, LocalDateTime.now());
 
         assertEquals(id, payment.getId());
         assertEquals(amount, payment.getAmount());
