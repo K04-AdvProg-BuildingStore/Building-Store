@@ -4,12 +4,14 @@ import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplierManage
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service.SupplierManagementService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/suppliers")
+@PreAuthorize("hasRole('ADMIN')")
 public class SupplierManagementController {
     private final SupplierManagementService service;
 

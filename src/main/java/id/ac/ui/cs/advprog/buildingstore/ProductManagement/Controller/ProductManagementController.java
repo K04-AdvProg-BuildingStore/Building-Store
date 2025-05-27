@@ -4,6 +4,7 @@ import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManageme
 import id.ac.ui.cs.advprog.buildingstore.ProductManagement.service.ProductManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class ProductManagementController {
 

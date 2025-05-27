@@ -5,11 +5,13 @@ import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service.SupplyServic
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/supplies")
+@PreAuthorize("hasRole('ADMIN')")
 public class SupplyController {
 
     @Autowired
