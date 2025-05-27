@@ -153,12 +153,6 @@
         });
     }
 
-    function payTransaction(id) {
-        // Placeholder: redirect to payment page or show alert
-        // location.href = `payment.html?id=${id}`;
-        alert('Payment page placeholder for transaction ID: ' + id);
-    }
-
     function createTransaction() {
         // Redirect to create transaction page or open modal
         window.location.href = 'create-transaction.html';
@@ -215,6 +209,9 @@
         document.getElementById('searchInput').value = '';
         const rows = document.querySelectorAll('#transactionsTable tbody tr');
         rows.forEach(row => row.style.display = '');
+    }
+    function payTransaction(id) {
+        window.location.href = `createPayment.html?id=${id}`;
     }
 </script>
 </body>
