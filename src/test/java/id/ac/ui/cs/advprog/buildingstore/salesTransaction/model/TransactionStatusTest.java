@@ -1,9 +1,5 @@
 package id.ac.ui.cs.advprog.buildingstore.salesTransaction.model;
 
-public class TransactionStatusTest {
-}
-package id.ac.ui.cs.advprog.buildingstore.salesTransaction.model;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

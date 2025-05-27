@@ -31,8 +31,12 @@ public class ProductManagementServiceImpl implements ProductManagementService {
 
     @Override
     public void deleteProductById(Integer id) {
+        if (!repository.existsById(id)) {
+            throw new IllegalArgumentException("Product not found");
+        }
         repository.deleteById(id);
     }
+
 
     @Override
     public ProductManagementModel updateProductInfo(

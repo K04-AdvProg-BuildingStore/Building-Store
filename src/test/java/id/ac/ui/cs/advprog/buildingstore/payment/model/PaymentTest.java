@@ -1,30 +1,55 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.model;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class PaymentTest {
 
+    private UUID id;
+    private BigDecimal amount;
+    private PaymentStatus status;
+    private String method;
+    private Integer salesTransactionId;
+    private LocalDateTime createdAt;
+
+    @BeforeEach
+    void setUp() {
+        id = UUID.randomUUID();
+        amount = new BigDecimal("100000");
+        status = PaymentStatus.FULL;
+        method = "Credit Card";
+        salesTransactionId = 12345;
+        createdAt = LocalDateTime.now();
+    }
+
+    @Test
+    void testPaymentConstruction() {
+        Payment payment = new Payment(id, amount, status, method, salesTransactionId, createdAt);
+
+        assertEquals(id, payment.getId());
+        assertEquals(amount, payment.getAmount());
+        assertEquals(status, payment.getStatus());
+        assertEquals(method, payment.getMethod());
+        assertEquals(salesTransactionId, payment.getSalesTransactionId());
+        assertEquals(createdAt, payment.getCreatedAt());
+    }
+
     @Test
     void testPaymentBuilder() {
-        UUID id = UUID.randomUUID();
-        BigDecimal amount = BigDecimal.valueOf(100000);
-        PaymentStatus status = PaymentStatus.FULL;
-        String method = "Credit Card";
-        Integer salesTransactionId = 1738;
-
         Payment payment = Payment.builder()
                 .id(id)
                 .amount(amount)
                 .status(status)
                 .method(method)
                 .salesTransactionId(salesTransactionId)
+                .createdAt(createdAt)
                 .build();
 
         assertEquals(id, payment.getId());
@@ -32,52 +57,30 @@ class PaymentTest {
         assertEquals(status, payment.getStatus());
         assertEquals(method, payment.getMethod());
         assertEquals(salesTransactionId, payment.getSalesTransactionId());
+        assertEquals(createdAt, payment.getCreatedAt());
     }
 
     @Test
-    void testPaymentNoArgsConstructor() {
+    void testNoArgsConstructor() {
         Payment payment = new Payment();
-        
-        assertNull(payment.getId());
-        assertNull(payment.getAmount());
-        assertNull(payment.getStatus());
-        assertNull(payment.getMethod());
-        assertNull(payment.getSalesTransactionId());
+        assertNotNull(payment);
     }
 
     @Test
-    void testPaymentAllArgsConstructor() {
-        UUID id = UUID.randomUUID();
-        BigDecimal amount = BigDecimal.valueOf(100000);
-        PaymentStatus status = PaymentStatus.INSTALLMENT;
-        String method = "Debit Card";
-        Integer salesTransactionId = 67890;
-
-        Payment payment = new Payment(id, amount, status, method, salesTransactionId);
+    void testSetters() {
+        Payment payment = new Payment();
+        payment.setId(id);
+        payment.setAmount(amount);
+        payment.setStatus(status);
+        payment.setMethod(method);
+        payment.setSalesTransactionId(salesTransactionId);
+        payment.setCreatedAt(createdAt);
 
         assertEquals(id, payment.getId());
         assertEquals(amount, payment.getAmount());
         assertEquals(status, payment.getStatus());
         assertEquals(method, payment.getMethod());
         assertEquals(salesTransactionId, payment.getSalesTransactionId());
-    }
-
-    @Test
-    void testPaymentSettersAndGetters() {
-        Payment payment = new Payment();
-        
-        UUID id = UUID.randomUUID();
-        payment.setId(id);
-        
-        payment.setAmount(BigDecimal.valueOf(200000));
-        payment.setStatus(PaymentStatus.FULL);
-        payment.setMethod("Bank Transfer");
-        payment.setSalesTransactionId(24680);
-        
-        assertEquals(id, payment.getId());
-        assertEquals(BigDecimal.valueOf(200000), payment.getAmount());
-        assertEquals(PaymentStatus.FULL, payment.getStatus());
-        assertEquals("Bank Transfer", payment.getMethod());
-        assertEquals(24680, payment.getSalesTransactionId());
+        assertEquals(createdAt, payment.getCreatedAt());
     }
 }

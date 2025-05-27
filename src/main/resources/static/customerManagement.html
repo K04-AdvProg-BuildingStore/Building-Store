@@ -2,8 +2,6 @@
 <html>
 <head>
     <title>Customer Management</title>
-    <!-- Add Font Awesome for proper icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -17,22 +15,6 @@
         .content {
             width: 100%;
         }
-        .header {
-            height: 70px;
-            border-bottom: 1px solid #DDDDDD;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding-right: 30px;
-        }
-        .logout {
-            color: rgba(141.39, 141.39, 141.39, 0.87);
-            font-size: 14px;
-            font-family: Poppins;
-            font-weight: 500;
-            word-wrap: break-word;
-            cursor: pointer;
-        }
         .page-title {
             margin: 40px 30px;
             display: flex;
@@ -42,7 +24,6 @@
         .title {
             color: #3C3C3C;
             font-size: 24px;
-            font-family: Poppins;
             font-weight: 600;
             word-wrap: break-word;
         }
@@ -63,9 +44,7 @@
             width: 100%;
             color: #3C3C3C;
             font-size: 14px;
-            font-family: Poppins;
             font-weight: 400;
-            word-wrap: break-word;
             padding-right: 15px;
         }
         .add-button {
@@ -82,16 +61,12 @@
         .add-button-text {
             color: white;
             font-size: 14px;
-            font-family: Poppins;
             font-weight: 500;
-            word-wrap: break-word;
         }
         .add-button-plus {
             color: white;
             font-size: 18px;
-            font-family: Poppins;
             font-weight: 600;
-            word-wrap: break-word;
             margin-right: 5px;
         }
         .table-container {
@@ -108,10 +83,8 @@
         th {
             color: #3C3C3C;
             font-size: 14px;
-            font-family: Poppins;
             font-weight: 500;
             text-transform: uppercase;
-            word-wrap: break-word;
             text-align: left;
             padding: 0 15px;
         }
@@ -124,9 +97,7 @@
         td {
             color: #3C3C3C;
             font-size: 14px;
-            font-family: Poppins;
             font-weight: 500;
-            word-wrap: break-word;
             padding: 0 15px;
         }
         .action-buttons {
@@ -136,7 +107,6 @@
             align-items: center;
             height: 100%;
         }
-        
         .action-button {
             cursor: pointer;
             display: flex;
@@ -146,30 +116,24 @@
             height: 24px;
             transition: transform 0.2s;
         }
-        
         .action-button:hover {
             transform: scale(1.2);
         }
-        
         .edit-icon {
             color: #2454FF;
             font-size: 16px;
         }
-        
         .delete-icon {
             color: #FD3535;
             font-size: 16px;
         }
-
         .history-icon {
             color: #BF5300;
             font-size: 16px;
         }
-        
         .search-icon {
             color: #3C3C3C;
         }
-        
         .clear-search {
             background: none;
             border: none;
@@ -178,40 +142,72 @@
             margin-right: 10px;
             display: none;
         }
-        
         .no-data {
             text-align: center;
             padding: 20px;
             color: #3C3C3C;
             font-size: 16px;
-            font-family: Poppins;
             font-weight: 500;
         }
-        
         .status-toggle {
             cursor: pointer;
             display: inline-flex;
             align-items: center;
         }
-        
         .status-active {
             color: #28a745;
         }
-        
         .status-inactive {
             color: #dc3545;
         }
-        
         .status-toggle:hover {
             text-decoration: underline;
+        }
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        .pagination-btn {
+            padding: 5px 12px;
+            margin: 0 5px;
+            border: 1px solid #DDDDDD;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #3C3C3C;
+            font-weight: 500;
+        }
+        .pagination-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .pagination-btn.active {
+            background-color: #BF5300;
+            color: white;
+            border-color: #BF5300;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #BF5300;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <!-- Navigation Bar Container -->
+    <div id="navbar-container"></div>
+
     <div class="content">
-        <div class="header">
-            <div class="logout" id="logoutBtn">Log out</div>
-        </div>
         <div class="page-title">
             <div class="title">Customers</div>
             <div style="display: flex; align-items: center;">
@@ -242,290 +238,491 @@
                 </thead>
                 <tbody id="customerTableBody">
                     <tr>
-                        <td colspan="8" class="no-data">Loading customers...</td>
+                        <td colspan="8" class="no-data">
+                            <div class="loading-spinner"></div> 
+                            <div style="margin-top: 10px;">Loading customers...</div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+            <!-- Pagination controls -->
+            <div id="paginationContainer" class="pagination-container"></div>
         </div>
     </div>
 
     <script>
-        // Check for authentication
-        function redirectLogin() {
-            const token = localStorage.getItem('jwt');
-            if (!token) {
-                window.location.href = 'authenticate.html';
+        /**
+         * Application State
+         */
+        const state = {
+            customers: [],
+            currentPage: 1,
+            pageSize: 10,
+            totalPages: 1,
+            isLoading: false,
+            searchQuery: '',
+            get paginatedCustomers() {
+                const start = (this.currentPage - 1) * this.pageSize;
+                const end = Math.min(start + this.pageSize, this.customers.length);
+                return this.customers.slice(start, end);
             }
-        }
+        };
 
-        // Redirect if not logged in
-        redirectLogin();
+        /**
+         * API functions - Handle all backend communication
+         */
+        const api = {
+            getHeaders() {
+                const token = localStorage.getItem('jwt');
+                return {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                };
+            },
 
-        // Helper function to get auth headers
-        function getAuthHeaders() {
-            const token = localStorage.getItem('jwt');
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            };
-        }
-
-        // Fetch all customers
-        async function fetchAllCustomers() {
-            try {
-                console.log('Attempting to fetch all customers...');
-                const response = await fetch('/customers/all', {
-                    headers: getAuthHeaders()
-                });
-
-                console.log('Response status:', response.status);
+            async fetchWithTimeout(url, options = {}, timeout = 10000) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
                 
-                if (response.ok) {
-                    const customers = await response.json();
-                    console.log('Customers retrieved:', customers);
-                    displayCustomers(customers);
-                } else if (response.status === 404) {
-                    console.error('Endpoint /customers/all not found');
-                    displayNoData('Endpoint not available. Try searching for a specific customer.');
-                } else {
-                    const errorText = await response.text();
-                    console.error('Failed to fetch customers:', response.status, errorText);
-                    displayNoData(`Failed to fetch customers. Server returned: ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Error in fetchAllCustomers:', error);
-                displayNoData(`Error loading customers: ${error.message}`);
-            }
-        }
-
-        // Fallback method to get all customers (simulate getting all if no endpoint exists)
-        async function fetchListOfCustomers() {
-            displayNoData('Use the search box to find customers by phone number');
-        }
-
-        // Fetch a specific customer by phone number
-        async function fetchCustomerByPhone(phoneNumber) {
-            try {
-                console.log(`Attempting to fetch customer with phone: ${phoneNumber}`);
-                const response = await fetch(`/customers/${phoneNumber}`, {
-                    headers: getAuthHeaders()
-                });
-
-                console.log('Response status:', response.status);
-                
-                if (response.ok) {
-                    const customer = await response.json();
-                    console.log('Customer retrieved:', customer);
-                    displayCustomers([customer]);
-                    document.getElementById('clearSearch').style.display = 'inline';
-                } else if (response.status === 404) {
-                    displayNoData(`No customer found with phone number: ${phoneNumber}`);
-                } else {
-                    const errorText = await response.text();
-                    console.error(`Error fetching ${phoneNumber}:`, response.status, errorText);
-                    displayNoData(`Error: ${response.status} when searching for customer`);
-                }
-            } catch (error) {
-                console.error('Error in fetchCustomerByPhone:', error);
-                displayNoData(`Error searching for customer: ${error.message}`);
-            }
-        }
-
-        // Display customers in the table
-        function displayCustomers(customers) {
-            const tableBody = document.getElementById('customerTableBody');
-            tableBody.innerHTML = '';
-
-            if (!customers || customers.length === 0) {
-                displayNoData('No customers found');
-                return;
-            }
-
-            console.log('Processing customers for display:', customers);
-
-            customers.forEach(customer => {
-                // Debug log to check the isActive property
-                console.log(`Customer ${customer.phoneNumber} - isActive:`, customer.isActive);
-                
-                const row = document.createElement('tr');
-                
-                const birthday = customer.birthday ? new Date(customer.birthday).toLocaleDateString() : 'N/A';
-                
-                // More robust status detection - check both camelCase and regular case
-                let status;
-                let isActive;
-                if (customer.hasOwnProperty('isActive')) {
-                    isActive = customer.isActive;
-                    status = isActive ? 'Active' : 'Inactive';
-                } else if (customer.hasOwnProperty('active')) {
-                    isActive = customer.active;
-                    status = isActive ? 'Active' : 'Inactive';
-                } else {
-                    isActive = false;
-                    status = 'Unknown';
-                }
-                
-                row.innerHTML = `
-                    <td>${customer.id || 'N/A'}</td>
-                    <td>${customer.name || 'N/A'}</td>
-                    <td>${customer.phoneNumber || 'N/A'}</td>
-                    <td>${customer.email || 'N/A'}</td>
-                    <td>${customer.gender || 'N/A'}</td>
-                    <td>${birthday}</td>
-                    <td>
-                        <span class="status-toggle ${isActive ? 'status-active' : 'status-inactive'}" 
-                              onclick="toggleCustomerStatus('${customer.phoneNumber}', ${!isActive})">
-                            ${status}
-                            <i class="fa-solid fa-rotate ms-1" style="font-size: 12px; margin-left: 5px;"></i>
-                        </span>
-                    </td>
-                    <td class="action-buttons">
-                        <div class="action-button" onclick="viewPurchaseHistory('${customer.phoneNumber}')">
-                            <i class="fa-solid fa-clock-rotate-left history-icon"></i>
-                        </div>
-                        <div class="action-button" onclick="editCustomer('${customer.phoneNumber}')">
-                            <i class="fa-solid fa-pen-to-square edit-icon"></i>
-                        </div>
-                        <div class="action-button" onclick="deleteCustomer('${customer.phoneNumber}')">
-                            <i class="fa-solid fa-trash delete-icon"></i>
-                        </div>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Display a message when no data is available
-        function displayNoData(message) {
-            const tableBody = document.getElementById('customerTableBody');
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="no-data">${message}</td>
-                </tr>
-            `;
-        }
-
-        // Delete a customer
-        async function deleteCustomer(phoneNumber) {
-            if (confirm('Are you sure you want to delete this customer?')) {
                 try {
-                    const response = await fetch(`/customers/${phoneNumber}`, {
-                        method: 'DELETE',
-                        headers: getAuthHeaders()
-                    });
+                    const signal = controller.signal;
+                    const response = await fetch(url, { ...options, signal });
+                    clearTimeout(timeoutId);
+                    return response;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    throw error;
+                }
+            },
+            
+            async getAllCustomers() {
+                return this.fetchWithTimeout('/customers/all', { 
+                    headers: this.getHeaders() 
+                });
+            },
+            
+            async getCustomerByPhone(phone) {
+                return this.fetchWithTimeout(`/customers/${phone}`, { 
+                    headers: this.getHeaders() 
+                });
+            },
+            
+            async deleteCustomer(phone) {
+                return this.fetchWithTimeout(`/customers/${phone}`, { 
+                    method: 'DELETE',
+                    headers: this.getHeaders() 
+                });
+            },
+            
+            async updateCustomerStatus(phone, customerData, newStatus) {
+                return this.fetchWithTimeout(`/customers/${phone}`, { 
+                    method: 'PUT',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify({
+                        phoneNumber: phone,
+                        name: customerData.name,
+                        isActive: newStatus
+                    })
+                });
+            }
+        };
 
-                    if (response.ok) {
-                        // If search is active, refresh the search results
-                        const searchInput = document.getElementById('searchInput');
-                        if (searchInput.value.trim()) {
-                            fetchCustomerByPhone(searchInput.value.trim());
-                        } else {
-                            fetchAllCustomers(); // Refresh the list
+        /**
+         * UI functions - Handle DOM manipulation and rendering
+         */
+        const ui = {
+            elements: {
+                tableBody: () => document.getElementById('customerTableBody'),
+                pagination: () => document.getElementById('paginationContainer'),
+                searchInput: () => document.getElementById('searchInput'),
+                clearSearch: () => document.getElementById('clearSearch')
+            },
+            
+            showLoading() {
+                this.elements.tableBody().innerHTML = `
+                    <tr>
+                        <td colspan="8" class="no-data">
+                            <div class="loading-spinner"></div> 
+                            <div style="margin-top: 10px;">Loading customers...</div>
+                        </td>
+                    </tr>`;
+            },
+            
+            showMessage(message) {
+                this.elements.tableBody().innerHTML = `
+                    <tr>
+                        <td colspan="8" class="no-data">${message}</td>
+                    </tr>`;
+            },
+            
+            renderCustomers(customers) {
+                if (!customers || customers.length === 0) {
+                    this.showMessage('No customers found');
+                    return;
+                }
+                
+                const tableBody = this.elements.tableBody();
+                tableBody.innerHTML = '';
+                
+                customers.forEach(customer => {
+                    const row = document.createElement('tr');
+                    
+                    const birthday = customer.birthday 
+                        ? new Date(customer.birthday).toLocaleDateString() 
+                        : 'N/A';
+                    
+                    // Check status property with fallbacks
+                    const isActive = customer.hasOwnProperty('isActive') 
+                        ? customer.isActive 
+                        : customer.hasOwnProperty('active') 
+                            ? customer.active 
+                            : false;
+                    
+                    const status = isActive ? 'Active' : 'Inactive';
+                    
+                    row.innerHTML = `
+                        <td>${customer.id || 'N/A'}</td>
+                        <td>${customer.name || 'N/A'}</td>
+                        <td>${customer.phoneNumber || 'N/A'}</td>
+                        <td>${customer.email || 'N/A'}</td>
+                        <td>${customer.gender || 'N/A'}</td>
+                        <td>${birthday}</td>
+                        <td>
+                            <span class="status-toggle ${isActive ? 'status-active' : 'status-inactive'}" 
+                                data-phone="${customer.phoneNumber}" 
+                                data-status="${!isActive}">
+                                ${status}
+                                <i class="fa-solid fa-rotate ms-1" style="font-size: 12px; margin-left: 5px;"></i>
+                            </span>
+                        </td>
+                        <td class="action-buttons">
+                            <div class="action-button" data-action="history" data-phone="${customer.phoneNumber}">
+                                <i class="fa-solid fa-clock-rotate-left history-icon"></i>
+                            </div>
+                            <div class="action-button" data-action="edit" data-phone="${customer.phoneNumber}">
+                                <i class="fa-solid fa-pen-to-square edit-icon"></i>
+                            </div>
+                            <div class="action-button" data-action="delete" data-phone="${customer.phoneNumber}">
+                                <i class="fa-solid fa-trash delete-icon"></i>
+                            </div>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Set up event listeners for the newly created elements
+                this.attachRowEventListeners();
+            },
+            
+            renderPagination(currentPage, totalPages) {
+                const container = this.elements.pagination();
+                container.innerHTML = '';
+                
+                if (totalPages <= 1) return;
+                
+                // Previous button
+                const prevBtn = document.createElement('button');
+                prevBtn.classList.add('pagination-btn');
+                prevBtn.innerHTML = '&laquo; Prev';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', () => controller.changePage(currentPage - 1));
+                container.appendChild(prevBtn);
+                
+                // Page buttons (with limit of 5 visible at once)
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, startPage + 4);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.classList.add('pagination-btn');
+                    if (i === currentPage) pageBtn.classList.add('active');
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => controller.changePage(i));
+                    container.appendChild(pageBtn);
+                }
+                
+                // Next button
+                const nextBtn = document.createElement('button');
+                nextBtn.classList.add('pagination-btn');
+                nextBtn.innerHTML = 'Next &raquo;';
+                nextBtn.disabled = currentPage === totalPages;
+                nextBtn.addEventListener('click', () => controller.changePage(currentPage + 1));
+                container.appendChild(nextBtn);
+            },
+            
+            attachRowEventListeners() {
+                // Add event listeners for status toggles
+                document.querySelectorAll('.status-toggle').forEach(toggle => {
+                    toggle.addEventListener('click', function() {
+                        const phone = this.getAttribute('data-phone');
+                        const newStatus = this.getAttribute('data-status') === 'true';
+                        controller.toggleCustomerStatus(phone, newStatus);
+                    });
+                });
+                
+                // Add event listeners for action buttons
+                document.querySelectorAll('.action-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const action = this.getAttribute('data-action');
+                        const phone = this.getAttribute('data-phone');
+                        
+                        switch(action) {
+                            case 'history':
+                                controller.viewPurchaseHistory(phone);
+                                break;
+                            case 'edit':
+                                controller.editCustomer(phone);
+                                break;
+                            case 'delete':
+                                controller.deleteCustomer(phone);
+                                break;
                         }
-                        alert('Customer deleted successfully');
+                    });
+                });
+            },
+            
+            setupInitialEventListeners() {
+                // Search input event
+                this.elements.searchInput().addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const query = e.target.value.trim();
+                        controller.handleSearch(query);
+                    }
+                });
+                
+                // Clear search button
+                this.elements.clearSearch().addEventListener('click', () => {
+                    this.elements.searchInput().value = '';
+                    this.elements.clearSearch().style.display = 'none';
+                    controller.loadAllCustomers();
+                });
+                
+                // Add customer button
+                document.getElementById('addCustomerBtn').addEventListener('click', () => {
+                    window.location.href = 'addCustomer.html';
+                });
+            }
+        };
+
+        /**
+         * Controller - Handles business logic and connects API and UI
+         */
+        const controller = {
+            init() {
+                // Authentication check
+                this.checkAuth();
+                
+                // Load navbar
+                this.loadNavbar();
+                
+                // Setup event listeners
+                ui.setupInitialEventListeners();
+                
+                // Load data
+                this.loadAllCustomers();
+            },
+            
+            checkAuth() {
+                const token = localStorage.getItem('jwt');
+                if (!token) {
+                    window.location.href = 'authenticate.html';
+                }
+            },
+            
+            async loadNavbar() {
+                try {
+                    const res = await fetch('navbar.html');
+                    if (!res.ok) throw new Error('Failed to load navbar');
+                    
+                    const html = await res.text();
+                    document.getElementById('navbar-container').innerHTML = html;
+                    
+                    // Set active nav link
+                    setTimeout(() => {
+                        const navLinks = document.querySelectorAll('.nav-link');
+                        navLinks.forEach(link => {
+                            if (link.getAttribute('href') === 'customerManagement.html') {
+                                link.classList.add('active');
+                            }
+                        });
+                    }, 100);
+                } catch (err) {
+                    console.error('Error loading navbar:', err);
+                    document.getElementById('navbar-container').innerHTML = 
+                        '<div class="alert alert-danger m-3">Failed to load navigation. Please refresh the page.</div>';
+                }
+            },
+            
+            async loadAllCustomers(retries = 2) {
+                if (state.isLoading) return;
+                
+                state.isLoading = true;
+                ui.showLoading();
+                
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        const response = await api.getAllCustomers();
+                        
+                        if (response.ok) {
+                            state.customers = await response.json();
+                            state.totalPages = Math.ceil(state.customers.length / state.pageSize);
+                            state.currentPage = 1;
+                            state.searchQuery = '';
+                            ui.elements.clearSearch().style.display = 'none';
+                            
+                            ui.renderCustomers(state.paginatedCustomers);
+                            ui.renderPagination(state.currentPage, state.totalPages);
+                            break;
+                        } else if (response.status === 404) {
+                            ui.showMessage('No customers found. Check the API endpoint.');
+                            break;
+                        } else {
+                            throw new Error(`Server error: ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.error(`Attempt ${i+1}/${retries+1} failed:`, error);
+                        
+                        if (i === retries) {
+                            if (error.name === 'AbortError') {
+                                ui.showMessage('Request timed out. Server may be unavailable.');
+                            } else {
+                                ui.showMessage(`Error loading customers: ${error.message}`);
+                            }
+                        } else {
+                            // Wait before retry using exponential backoff
+                            await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+                        }
+                    }
+                }
+                
+                state.isLoading = false;
+            },
+            
+            async handleSearch(query) {
+                if (!query) {
+                    this.loadAllCustomers();
+                    return;
+                }
+                
+                if (state.isLoading) return;
+                
+                state.isLoading = true;
+                ui.showLoading();
+                
+                try {
+                    const response = await api.getCustomerByPhone(query);
+                    
+                    if (response.ok) {
+                        const customer = await response.json();
+                        state.customers = [customer];
+                        state.totalPages = 1;
+                        state.currentPage = 1;
+                        state.searchQuery = query;
+                        ui.elements.clearSearch().style.display = 'inline';
+                        
+                        ui.renderCustomers(state.customers);
+                        ui.renderPagination(state.currentPage, state.totalPages);
+                    } else if (response.status === 404) {
+                        ui.showMessage(`No customer found with phone number: ${query}`);
                     } else {
-                        alert('Failed to delete customer');
+                        ui.showMessage(`Error: ${response.status} when searching for customer`);
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    if (error.name === 'AbortError') {
+                        ui.showMessage('Search request timed out.');
+                    } else {
+                        ui.showMessage(`Error searching for customer: ${error.message}`);
+                    }
+                } finally {
+                    state.isLoading = false;
+                }
+            },
+            
+            changePage(newPage) {
+                if (newPage < 1 || newPage > state.totalPages) return;
+                
+                state.currentPage = newPage;
+                ui.renderCustomers(state.paginatedCustomers);
+                ui.renderPagination(state.currentPage, state.totalPages);
+            },
+            
+            viewPurchaseHistory(phone) {
+                // Find the customer in our state to get the ID
+                const customer = state.customers.find(c => c.phoneNumber === phone);
+                if (customer && customer.id) {
+                    console.log(`Navigating to purchase history for customer ID: ${customer.id}`);
+                    window.location.href = `purchaseHistory.html?customerId=${customer.id}`;
+                } else {
+                    console.error(`Could not find customer ID for phone: ${phone}`);
+                    alert("Customer ID not found. Cannot view purchase history.");
+                }
+            },
+            
+            editCustomer(phone) {
+                window.location.href = `editCustomer.html?phone=${phone}`;
+            },
+            
+            async deleteCustomer(phone) {
+                if (!confirm('Are you sure you want to delete this customer?')) return;
+                
+                try {
+                    const response = await api.deleteCustomer(phone);
+                    
+                    if (response.ok) {
+                        alert('Customer deleted successfully');
+                        
+                        // Refresh the current view
+                        if (state.searchQuery) {
+                            ui.elements.searchInput().value = '';
+                            ui.elements.clearSearch().style.display = 'none';
+                            this.loadAllCustomers();
+                        } else {
+                            this.loadAllCustomers();
+                        }
+                    } else {
+                        alert(`Failed to delete customer: ${response.status}`);
                     }
                 } catch (error) {
                     console.error('Error deleting customer:', error);
-                    alert('Error deleting customer. Please try again.');
+                    alert(`Error deleting customer: ${error.message}`);
                 }
-            }
-        }
-
-        // Edit customer
-        function editCustomer(phoneNumber) {
-            window.location.href = `editCustomer.html?phone=${phoneNumber}`;
-        }
-
-        // View purchase history
-        function viewPurchaseHistory(phoneNumber) {
-            window.location.href = `purchaseHistory.html?phone=${phoneNumber}`;
-        }
-
-        // Add new customer
-        document.getElementById('addCustomerBtn').addEventListener('click', function() {
-            window.location.href = 'addCustomer.html';
-        });
-
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const searchValue = this.value.trim();
-                if (searchValue) {
-                    fetchCustomerByPhone(searchValue);
-                } else {
-                    fetchAllCustomers();
-                    document.getElementById('clearSearch').style.display = 'none';
-                }
-            }
-        });
-
-        // Clear search
-        document.getElementById('clearSearch').addEventListener('click', function() {
-            document.getElementById('searchInput').value = '';
-            this.style.display = 'none';
-            fetchAllCustomers();
-        });
-
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async function() {
-            const token = localStorage.getItem('jwt');
-            if (!token) {
-                window.location.href = 'authenticate.html';
-                return;
-            }
-            await fetch('/api/v1/auth/logout', {
-                method: 'POST',
-                headers: getAuthHeaders()
-            });
-            localStorage.removeItem('jwt');
-            window.location.href = 'authenticate.html';
-        });
-
-        // Toggle customer status
-        async function toggleCustomerStatus(phoneNumber, newStatus) {
-            try {
-                const response = await fetch(`/customers/${phoneNumber}`, {
-                    headers: getAuthHeaders()
-                });
-                
-                if (response.ok) {
-                    const customer = await response.json();
+            },
+            
+            async toggleCustomerStatus(phone, newStatus) {
+                try {
+                    // Get current customer data
+                    const customerResponse = await api.getCustomerByPhone(phone);
                     
-                    // Update only the status field
-                    const updateData = {
-                        phoneNumber: phoneNumber,
-                        name: customer.name,
-                        isActive: newStatus
-                    };
+                    if (!customerResponse.ok) {
+                        throw new Error(`Failed to fetch customer data: ${customerResponse.status}`);
+                    }
                     
-                    const updateResponse = await fetch(`/customers/${phoneNumber}`, {
-                        method: 'PUT',
-                        headers: getAuthHeaders(),
-                        body: JSON.stringify(updateData)
-                    });
+                    const customerData = await customerResponse.json();
+                    
+                    // Update customer status
+                    const updateResponse = await api.updateCustomerStatus(phone, customerData, newStatus);
                     
                     if (updateResponse.ok) {
-                        // Refresh the current view
-                        const searchInput = document.getElementById('searchInput');
-                        if (searchInput.value.trim()) {
-                            fetchCustomerByPhone(searchInput.value.trim());
+                        // Refresh the view
+                        if (state.searchQuery) {
+                            this.handleSearch(state.searchQuery);
                         } else {
-                            fetchAllCustomers();
+                            this.loadAllCustomers();
                         }
                     } else {
-                        alert('Failed to update customer status');
+                        throw new Error(`Failed to update status: ${updateResponse.status}`);
                     }
-                } else {
-                    alert('Failed to fetch customer data');
+                } catch (error) {
+                    console.error('Error updating status:', error);
+                    alert(`Error updating customer status: ${error.message}`);
                 }
-            } catch (error) {
-                console.error('Error toggling customer status:', error);
-                alert('Error updating customer status. Please try again.');
             }
-        }
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => controller.init());
     </script>
 </body>
 </html>

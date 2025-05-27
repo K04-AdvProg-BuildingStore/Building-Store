@@ -254,7 +254,14 @@
                 document.getElementById('birthday').value = `${year}-${month}-${day}`;
             }
             
-            document.getElementById('isActive').value = customer.isActive ? 'true' : 'false';
+            // Check for either isActive or active property
+            const isActive = customer.hasOwnProperty('isActive') 
+                ? customer.isActive 
+                : customer.hasOwnProperty('active') 
+                    ? customer.active 
+                    : false;
+                    
+            document.getElementById('isActive').value = isActive ? 'true' : 'false';
         }
 
         // Handle form submission
@@ -268,7 +275,7 @@
                 email: document.getElementById('email').value || null,
                 gender: document.getElementById('gender').value || null,
                 birthday: document.getElementById('birthday').value || null,
-                isActive: document.getElementById('isActive').value === 'true'
+                active: document.getElementById('isActive').value === 'true'
             };
             
             try {

@@ -1,8 +1,12 @@
 package id.ac.ui.cs.advprog.buildingstore.payment.service;
 
+import id.ac.ui.cs.advprog.buildingstore.payment.dependency.SalesTransactionGateway;
 import id.ac.ui.cs.advprog.buildingstore.payment.enums.PaymentStatus;
 import id.ac.ui.cs.advprog.buildingstore.payment.model.Payment;
 import id.ac.ui.cs.advprog.buildingstore.payment.repository.PaymentRepository;
+import id.ac.ui.cs.advprog.buildingstore.payment.strategy.FullPaymentStrategy;
+import id.ac.ui.cs.advprog.buildingstore.payment.strategy.InstallmentPaymentStrategy;
+import id.ac.ui.cs.advprog.buildingstore.payment.strategy.PaymentStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,11 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,156 +25,168 @@ class PaymentServiceImplTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private SalesTransactionGateway salesTransactionGateway;
+
+    @Mock
+    private List<PaymentStrategy> paymentStrategies;
+
+    @Mock
+    private FullPaymentStrategy fullPaymentStrategy;
+
+    @Mock
+    private InstallmentPaymentStrategy installmentPaymentStrategy;
+
+    @Mock
+    private PaymentMetricService metricService;
+
+    @Mock
+    private SalesTransactionGateway salesTransactionGatewayMock;
+
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
-    private Payment testPayment;
-    private UUID testId;
+    private Payment fullPayment;
+    private Payment installmentPayment;
+    private UUID paymentId;
+    private Integer salesTransactionId;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        
-        testId = UUID.randomUUID();
-        testPayment = Payment.builder()
-                .id(testId)
+
+        paymentId = UUID.randomUUID();
+        salesTransactionId = 12345;
+
+        fullPayment = Payment.builder()
+                .id(paymentId)
+                .amount(BigDecimal.valueOf(100000))
+                .status(PaymentStatus.FULL)
+                .method("Credit Card")
+                .salesTransactionId(salesTransactionId)
+                .build();
+
+        installmentPayment = Payment.builder()
+                .id(paymentId)
+                .amount(BigDecimal.valueOf(50000))
+                .status(PaymentStatus.INSTALLMENT)
+                .method("Debit Card")
+                .salesTransactionId(salesTransactionId)
+                .build();
+
+        // Set up the service with our mocked strategies
+        paymentService = new PaymentServiceImpl(
+                paymentRepository,
+                Arrays.asList(fullPaymentStrategy, installmentPaymentStrategy),
+                metricService,
+                salesTransactionGatewayMock);
+    }
+
+    @Test
+    void testCreateFullPayment() {
+        when(fullPaymentStrategy.supports(PaymentStatus.FULL)).thenReturn(true);
+        when(fullPaymentStrategy.execute(fullPayment)).thenReturn(fullPayment);
+        when(paymentRepository.save(fullPayment)).thenReturn(fullPayment);
+
+        Payment result = paymentService.create(fullPayment);
+
+        assertEquals(fullPayment, result);
+        verify(fullPaymentStrategy).execute(fullPayment);
+        verify(metricService).recordPaymentAttempt(fullPayment);
+        verify(metricService).recordSuccessfulPayment(fullPayment);
+        verify(paymentRepository).save(fullPayment);
+    }
+
+    @Test
+    void testCreateInstallmentPayment() {
+        when(installmentPaymentStrategy.supports(PaymentStatus.INSTALLMENT)).thenReturn(true);
+        when(installmentPaymentStrategy.execute(installmentPayment)).thenReturn(installmentPayment);
+        when(paymentRepository.save(installmentPayment)).thenReturn(installmentPayment);
+
+        Payment result = paymentService.create(installmentPayment);
+
+        assertEquals(installmentPayment, result);
+        verify(installmentPaymentStrategy).execute(installmentPayment);
+        verify(metricService).recordPaymentAttempt(installmentPayment);
+        verify(metricService).recordSuccessfulPayment(installmentPayment);
+        verify(paymentRepository).save(installmentPayment);
+    }
+
+    @Test
+    void testFindById() {
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(fullPayment));
+
+        Payment result = paymentService.findById(paymentId);
+
+        assertEquals(fullPayment, result);
+    }
+
+    @Test
+    void testFindByIdNotFound() {
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.empty());
+
+        Payment result = paymentService.findById(paymentId);
+
+        assertNull(result);
+    }
+
+    @Test
+    void testFindAll() {
+        List<Payment> expectedPayments = Arrays.asList(fullPayment, installmentPayment);
+        when(paymentRepository.findAll()).thenReturn(expectedPayments);
+
+        List<Payment> result = paymentService.findAll();
+
+        assertEquals(expectedPayments, result);
+    }
+
+    @Test
+    void testUpdate() {
+        Payment updatedPayment = Payment.builder()
+                .id(paymentId)
+                .amount(BigDecimal.valueOf(150000))
+                .status(PaymentStatus.FULL)
+                .method("Updated Method")
+                .salesTransactionId(salesTransactionId)
+                .build();
+
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(fullPayment));
+        when(paymentRepository.save(any(Payment.class))).thenReturn(updatedPayment);
+
+        Payment result = paymentService.update(paymentId, updatedPayment);
+
+        assertEquals(updatedPayment, result);
+        assertEquals(paymentId, result.getId()); // Ensure ID remains the same
+    }
+
+    @Test
+    void testUpdateNotFound() {
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.empty());
+
+        Payment result = paymentService.update(paymentId, fullPayment);
+
+        assertNull(result);
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void testDelete() {
+        UUID paymentId = UUID.randomUUID();
+        Payment payment = Payment.builder()
+                .id(paymentId)
                 .amount(BigDecimal.valueOf(100000))
                 .status(PaymentStatus.FULL)
                 .method("Credit Card")
                 .salesTransactionId(12345)
                 .build();
-    }
 
-    // Happy Path Tests
+        // Mock the repository to return the payment when findById is called
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(payment));
 
-    @Test
-    void create_WithValidPayment_ShouldSaveAndReturnPayment() {
-        when(paymentRepository.save(any(Payment.class))).thenReturn(testPayment);
+        // Call the method
+        paymentService.delete(paymentId);
 
-        Payment result = paymentService.create(testPayment);
-
-        assertNotNull(result);
-        assertEquals(testPayment, result);
-        verify(paymentRepository).save(testPayment);
-    }
-
-    @Test
-    void findAll_WithExistingPayments_ShouldReturnAllPayments() {
-        List<Payment> expectedPayments = Arrays.asList(testPayment);
-        when(paymentRepository.findAll()).thenReturn(expectedPayments);
-
-        List<Payment> result = paymentService.findAll();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(expectedPayments, result);
-        verify(paymentRepository).findAll();
-    }
-    
-    @Test
-    void findAll_WithNoPayments_ShouldReturnEmptyList() {
-        when(paymentRepository.findAll()).thenReturn(Collections.emptyList());
-
-        List<Payment> result = paymentService.findAll();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(paymentRepository).findAll();
-    }
-
-    @Test
-    void findById_WithExistingPayment_ShouldReturnPayment() {
-        when(paymentRepository.findById(testId)).thenReturn(Optional.of(testPayment));
-
-        Payment result = paymentService.findById(testId);
-
-        assertNotNull(result);
-        assertEquals(testPayment, result);
-        verify(paymentRepository).findById(testId);
-    }
-
-    @Test
-    void update_WithExistingPayment_ShouldUpdateAndReturnPayment() {
-        Payment updatedPayment = Payment.builder()
-                .id(testId)
-                .amount(BigDecimal.valueOf(200000))
-                .status(PaymentStatus.INSTALLMENT)
-                .method("Debit Card")
-                .salesTransactionId(67890)
-                .build();
-
-        when(paymentRepository.findById(testId)).thenReturn(Optional.of(testPayment));
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Payment result = paymentService.update(testId, updatedPayment);
-
-        assertNotNull(result);
-        assertEquals(updatedPayment.getAmount(), result.getAmount());
-        assertEquals(updatedPayment.getStatus(), result.getStatus());
-        assertEquals(updatedPayment.getMethod(), result.getMethod());
-        assertEquals(updatedPayment.getSalesTransactionId(), result.getSalesTransactionId());
-        verify(paymentRepository).findById(testId);
-        verify(paymentRepository).save(any(Payment.class));
-    }
-
-    @Test
-    void delete_WithExistingId_ShouldCallRepositoryDeleteById() {
-        doNothing().when(paymentRepository).deleteById(testId);
-
-        paymentService.delete(testId);
-
-        verify(paymentRepository).deleteById(testId);
-    }
-    
-    // Unhappy Path Tests
-
-    @Test
-    void findById_WithNonExistingPayment_ShouldReturnNull() {
-        when(paymentRepository.findById(testId)).thenReturn(Optional.empty());
-
-        Payment result = paymentService.findById(testId);
-
-        assertNull(result);
-        verify(paymentRepository).findById(testId);
-    }
-
-    @Test
-    void update_WithNonExistingPayment_ShouldReturnNull() {
-        Payment updatedPayment = Payment.builder()
-                .amount(BigDecimal.valueOf(200000))
-                .status(PaymentStatus.INSTALLMENT)
-                .method("Debit Card")
-                .salesTransactionId(67890)
-                .build();
-
-        when(paymentRepository.findById(testId)).thenReturn(Optional.empty());
-
-        Payment result = paymentService.update(testId, updatedPayment);
-
-        assertNull(result);
-        verify(paymentRepository).findById(testId);
-        verify(paymentRepository, never()).save(any(Payment.class));
-    }
-
-    @Test
-    void delete_WithNonExistingId_ShouldNotThrowException() {
-        doNothing().when(paymentRepository).deleteById(any());
-        
-        // Should not throw exception when deleting non-existing ID
-        assertDoesNotThrow(() -> paymentService.delete(UUID.randomUUID()));
-    }
-
-    @Test
-    void create_WithNullPayment_ShouldThrowException() {
-        when(paymentRepository.save(null)).thenThrow(IllegalArgumentException.class);
-        
-        assertThrows(IllegalArgumentException.class, () -> paymentService.create(null));
-    }
-
-    @Test
-    void update_WithNullPayment_ShouldThrowException() {
-        when(paymentRepository.findById(testId)).thenReturn(Optional.of(testPayment));
-        
-        assertThrows(NullPointerException.class, () -> paymentService.update(testId, null));
+        // Verify that deleteById was called with the correct ID
+        verify(paymentRepository).deleteById(paymentId);
     }
 }

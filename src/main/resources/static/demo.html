@@ -1,101 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Demo Controller</title>
+    <title>Building Store - Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background-image: url('images/Screenshot 2025-05-27 012808.png');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        .hero-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+    </style>
 </head>
 <body>
-<h1>Demo Homepage</h1>
-<h2>Demo Controller Endpoint</h2>
-<button id="cashierBtn">Cashier Endpoint</button>
-<button id="adminBtn">Admin Endpoint</button>
-<button id="placeholder1">Placeholder 1</button>
-<button id="placeholder2">Placeholder 2</button>
-<button id="placeholder3">Placeholder 3</button>
-<button id="placeholder4">Placeholder 4</button>
-<button id="logoutBtn">Log Out</button>
-<div id="result"></div>
-<div>
-    <strong>JWT Token:</strong>
-    <pre id="jwtToken"></pre>
-</div>
+    <!-- Include Navbar -->
+    <div id="navbar-placeholder"></div>
+    
+    <div class="container mt-4">
+        <div class="p-5 mb-4 rounded-3 hero-section">
+            <div class="container-fluid py-5 hero-content">
+                <h1 class="display-5 fw-bold">Welcome to Building Store</h1>
+                <p class="col-md-8 fs-4">Your one-stop solution for building materials management.</p>
+                <p class="col-md-8">Manage products, suppliers, inventory, and sales with our comprehensive system.</p>
+            </div>
+        </div>
+        
+        <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Products</h5>
+                        <p class="card-text">Browse and manage your product inventory.</p>
+                        <a href="products.html" class="btn" style="background-color: #f77f00; color: white;">Go to Products</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Suppliers</h5>
+                        <p class="card-text">Manage your supplier relationships.</p>
+                        <a href="suppliermanagement.html" class="btn" style="background-color: #f77f00; color: white;">Go to Suppliers</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Transactions</h5>
+                        <p class="card-text">View and process sales transactions.</p>
+                        <a href="sales-transactions.html" class="btn" style="background-color: #f77f00; color: white;">Go to Transactions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<script>
-    function getAuthHeaders() {
-        const token = localStorage.getItem('jwt');
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    }
+        <div id="result" class="alert alert-info mt-3" style="display: none;"></div>
+    </div>
 
-    function redirectLogin() {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-            window.location.href = 'authenticate.html';
-        }
-    }
-
-    // Redirect if not logged in
-    redirectLogin();
-
-    // Print token
-    document.getElementById('jwtToken').textContent = localStorage.getItem('jwt') || 'Not logged in';
-
-    // Button event listeners
-    document.getElementById('cashierBtn').onclick = async function() {
-        try {
-            //here im gonna call the demo controller cashier endpoint and the auth headers i can just
-            //retrieve by calling getAuthHeaders()
-            const res = await fetch('/api/v1/demo-controller/cashier', {
-                headers: getAuthHeaders()
+    <!-- Bootstrap and required scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load the navbar
+        fetch('navbar.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('navbar-placeholder').innerHTML = data;
             });
-            if (!res.ok) {
-                document.getElementById('result').textContent = 'You are not a cashier';
-                return;
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('jwt');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function redirectLogin() {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'authenticate.html';
             }
-            const text = await res.text();
-            document.getElementById('result').textContent = text;
-        } catch (e) {
-            document.getElementById('result').textContent = 'Network failure. Try again later.';
         }
-    };
 
-    document.getElementById('adminBtn').onclick = async function() {
-        try {
-            const res = await fetch('/api/v1/demo-controller/admin', {
-                headers: getAuthHeaders()
-            });
-            if (!res.ok) {
-                document.getElementById('result').textContent = 'You are not an admin';
-                return;
-            }
-            const text = await res.text();
-            document.getElementById('result').textContent = text;
-        } catch (e) {
-            document.getElementById('result').textContent = 'Network failure. Try again later.';
-        }
-    };
-
-    // Placeholders
-    document.getElementById('placeholder1').onclick = () => window.location.href = '#';
-    document.getElementById('placeholder2').onclick = () => window.location.href = '#';
-    document.getElementById('placeholder3').onclick = () => window.location.href = '#';
-    document.getElementById('placeholder4').onclick = () => window.location.href = '#';
-
-    // Logout
-    document.getElementById('logoutBtn').onclick = async function() {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-            window.location.href = 'authenticate.html';
-            return;
-        }
-        await fetch('/api/v1/auth/logout', {
-            method: 'POST',
-            headers: getAuthHeaders()
-        });
-        localStorage.removeItem('jwt');
-        window.location.href = 'authenticate.html';
-    };
-</script>
+        // Redirect if not logged in
+        redirectLogin();
+    </script>
 </body>
 </html>

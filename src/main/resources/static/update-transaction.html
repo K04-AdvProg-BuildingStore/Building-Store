@@ -2,17 +2,58 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Update Sales Transaction</title>
     <style>
         body { font-family: Arial, sans-serif; }
-        form { max-width: 600px; margin: 40px auto; }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+        .center-header {
+            text-align: center;
+            margin: 30px 0 20px 0;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        form { max-width: 600px; margin: 0 auto; }
         label { display: block; margin-top: 12px; }
         input, select { width: 100%; padding: 8px; margin-top: 4px; }
-        button { margin-top: 20px; }
+        button { margin: 0 2px; }
+        .oval-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .oval-btn.orange {
+            background: #f77f00;
+            color: white;
+        }
+        .oval-btn.gray {
+            background: #ccc;
+            color: #333;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0 2px;
+            padding: 4px 8px;
+        }
+        .icon-btn:focus {
+            outline: 2px solid #f77f00;
+        }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ccc; padding: 8px; }
-        th { background: #f4f4f4; }
+        th { background: #d62828; color: white; }
         .actions button { margin: 0 2px; }
+        /* Modal styles */
         .modal {
             display: none; position: fixed; z-index: 1; left: 0; top: 0;
             width: 100%; height: 100%; overflow: auto;
@@ -21,61 +62,108 @@
         .modal-content {
             background: #fff; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 400px;
         }
-        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .close {
+            float: none;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 16px;
+        }
+        .modal-content input[type="number"] {
+            box-sizing: border-box;
+            width: calc(100% - 20px);
+            padding-right: 20px;
+        }
+        .modal-content label[for], .modal-content label {
+            display: block;
+        }
+        .modal-content label + label {
+            margin-top: 12px;
+        }
+        .modal-content label[for="quantity"], .modal-content label[for="productId"] {
+            margin-bottom: 0;
+        }
+        .modal-content label[for="quantity"] {
+            margin-bottom: 0;
+        }
+        .modal-content label[for="quantity"] + div {
+            margin-top: 18px;
+        }
+        .modal-content .modal-quantity {
+            margin-bottom: 18px;
+        }
+        .modal-content div strong {
+            margin-right: 4px;
+        }
+        .modal-content div + button {
+            margin-top: 18px;
+        }
     </style>
 </head>
 <body>
-<h2>Update Sales Transaction</h2>
-<div id="errorMessage" style="color: red; display: none; margin-bottom: 12px;"></div>
-<form id="updateForm">
-    <label>Customer ID
-        <input type="number" name="customerId" required>
-    </label>
-    <label>Cashier ID
-        <input type="number" name="cashierId" required>
-    </label>
-    <label>Status
-        <select name="status" required>
-            <option value="0">PENDING</option>
-            <option value="1">PAID</option>
-        </select>
-    </label>
-    <h3>Sales Items</h3>
-    <table id="itemsTable">
-        <thead>
-        <tr>
-            <th>Product ID</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th class="actions">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- Sales items will be rendered here -->
-        </tbody>
-    </table>
-    <button type="button" onclick="openModal()">Add Item</button>
-    <button type="submit">Update</button>
-</form>
-
+<div class="main-container">
+    <h2 class="center-header">Update Sales Transaction</h2>
+    <div id="errorMessage" style="color: red; display: none; margin-bottom: 12px;"></div>
+    <form id="updateForm">
+        <label>Customer ID <span title="Customer">🧑</span>
+            <input type="number" name="customerId" required>
+        </label>
+        <label>Cashier ID <span title="Cashier">🏪</span>
+            <input type="number" name="cashierId" required>
+        </label>
+        <label>Status
+            <select name="status" required>
+                <option value="0">PENDING</option>
+                <option value="1">PAID</option>
+            </select>
+        </label>
+        <h3>Sales Items</h3>
+        <table id="itemsTable">
+            <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th class="actions">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Sales items will be rendered here -->
+            </tbody>
+        </table>
+        <div style="height: 24px;"></div>
+        <button type="button" class="oval-btn orange" onclick="openModal()">Add Item</button>
+        <div style="height: 18px;"></div>
+        <div id="itemsSummary"></div>
+        <button type="submit" class="oval-btn orange" style="margin-top: 20px;">Update</button>
+    </form>
+</div>
 <!-- Modal for adding/editing sales item -->
 <div id="itemModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h4 id="modalTitle">Add Item</h4>
+        <div class="modal-content-header">
+            <h4 id="modalTitle" style="margin:0;">Add Item</h4>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
         <form id="itemForm" onsubmit="saveItem(event)">
             <input type="hidden" name="editIndex" value="">
             <label>Product ID
                 <input type="number" name="productId" required>
             </label>
-            <label>Quantity
+            <label class="modal-quantity">Quantity
                 <input type="number" name="quantity" min="1" required>
             </label>
-            <div>
+            <div style="margin-top:18px;">
                 <strong>Price: </strong>
                 <span id="calculatedPrice">-</span>
             </div>
-            <button type="submit" id="itemSaveBtn">Add Item</button>
+            <button type="submit" id="itemSaveBtn" class="oval-btn orange">Add Item</button>
         </form>
     </div>
 </div>
@@ -138,12 +226,13 @@
                 <td>${item.quantity}</td>
                 <td>${item.price}</td>
                 <td class="actions">
-                    <button type="button" onclick="editItem(${idx})">Edit</button>
-                    <button type="button" onclick="deleteItem(${idx})">Delete</button>
+                    <button type="button" class="icon-btn" onclick="editItem(${idx})">Edit</button>
+                    <button type="button" class="icon-btn" onclick="deleteItem(${idx})">Delete</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
+        updateItemsSummary();
     }
 
     function openModal(editIdx = null) {
@@ -212,6 +301,16 @@
         renderItems();
     }
 
+    function updateItemsSummary() {
+        const div = document.getElementById('itemsSummary');
+        if (!div) return;
+        if (items.length === 0) {
+            div.textContent = 'No sales items added.';
+        } else {
+            div.textContent = items.length + ' sales item(s) added.';
+        }
+    }
+
     document.getElementById('itemForm').productId.addEventListener('change', updateCalculatedPrice);
     document.getElementById('itemForm').quantity.addEventListener('input', updateCalculatedPrice);
 
@@ -270,3 +369,6 @@
 </script>
 </body>
 </html>
+
+
+

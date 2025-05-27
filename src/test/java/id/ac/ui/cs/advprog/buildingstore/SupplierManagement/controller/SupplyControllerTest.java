@@ -1,153 +1,168 @@
 package id.ac.ui.cs.advprog.buildingstore.SupplierManagement.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.model.ProductManagementModel;
+import id.ac.ui.cs.advprog.buildingstore.ProductManagement.repository.ProductManagementRepository;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplyModel;
 import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.model.SupplierManagementModel;
-import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.service.SupplyService;
+import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.repository.SupplyRepository;
+import id.ac.ui.cs.advprog.buildingstore.SupplierManagement.repository.SupplierManagementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureTestDatabase(replace = Replace.ANY)
 public class SupplyControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private SupplyService service;
+    @Autowired
+    private SupplierManagementRepository supplierRepository;
+
+    @Autowired
+    private ProductManagementRepository productRepository;
+
+    @Autowired
+    private SupplyRepository supplyRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     private SupplierManagementModel supplier;
+    private ProductManagementModel product;
     private SupplyModel supply;
 
     @BeforeEach
     void setUp() {
+        // Clean DB
+        supplyRepository.deleteAll();
+        productRepository.deleteAll();
+        supplierRepository.deleteAll();
+
+        // Create supplier
         supplier = new SupplierManagementModel();
-        supplier.setId(1);
         supplier.setName("Test Supplier");
-        supplier.setPhoneNumber("555-0001");
+        supplier.setPhoneNumber("08123450001");
         supplier.setAddress("Addr");
         supplier.setActive(true);
+        supplier = supplierRepository.save(supplier);
 
+        // Create product
+        product = ProductManagementModel.builder()
+                .name("Test Product")
+                .quantity(100)
+                .price(1000)
+                .status("Available")
+                .information("Info")
+                .administrator(null)
+                .build();
+        product = productRepository.save(product);
+
+        // Create supply
         supply = new SupplyModel();
-        supply.setId(10);
         supply.setSupplier(supplier);
+        supply.setProduct(product);
         supply.setSupplyStock(50);
         supply.setDeliveryAddress("Warehouse A");
+        supply = supplyRepository.save(supply);
     }
 
     @WithMockUser(username = "user", roles = {"USER"})
     @Test
-    void testListAllSupplies() throws Exception {
-        Mockito.when(service.getAllSupplies()).thenReturn(List.of(supply));
-
+    void listAllSupplies_shouldReturnSavedSupply() throws Exception {
         mockMvc.perform(get("/api/supplies"))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(10))
-                .andExpect(jsonPath("$[0].supplier.phoneNumber").value("555-0001"));
+                .andExpect(jsonPath("$[0].id").value(supply.getId()))
+                .andExpect(jsonPath("$[0].supplier.phoneNumber").value(supplier.getPhoneNumber()))
+                .andExpect(jsonPath("$[0].product.id").value(product.getId()));
     }
 
     @WithMockUser(username = "user", roles = {"USER"})
     @Test
-    void testGetSupplyById() throws Exception {
-        Mockito.when(service.getSupplyById(10)).thenReturn(supply);
-
-        mockMvc.perform(get("/api/supplies/10"))
-                .andDo(print())
+    void getSupplyById_shouldReturnSupply() throws Exception {
+        mockMvc.perform(get("/api/supplies/{id}", supply.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.id").value(supply.getId()))
                 .andExpect(jsonPath("$.deliveryAddress").value("Warehouse A"));
     }
 
     @WithMockUser(username = "user", roles = {"USER"})
     @Test
-    void testGetBySupplierPhone() throws Exception {
-        Mockito.when(service.getSuppliesBySupplierPhone("555-0001"))
-                .thenReturn(List.of(supply));
-
-        mockMvc.perform(get("/api/supplies/by-supplier-phone/555-0001"))
-                .andDo(print())
+    void getBySupplierPhone_shouldReturnSupplyList() throws Exception {
+        mockMvc.perform(get("/api/supplies/by-supplier-phone/{phone}", supplier.getPhoneNumber()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].supplier.id").value(1));
+                .andExpect(jsonPath("$[0].supplier.id").value(supplier.getId()));
     }
-
-    // Uncomment when by-product endpoint is enabled
-    // @WithMockUser(username = "user", roles = {"USER"})
-    // @Test
-    // void testGetByProduct() throws Exception {
-    //     Mockito.when(service.getSuppliesByProduct(5))
-    //         .thenReturn(List.of(supply));
-    //
-    //     mockMvc.perform(get("/api/supplies/by-product/5"))
-    //         .andDo(print())
-    //         .andExpect(status().isOk())
-    //         .andExpect(jsonPath("$[0].id").value(10));
-    // }
 
     @WithMockUser(username = "user", roles = {"USER"})
     @Test
-    void testCreateSupply() throws Exception {
-        SupplyModel toCreate = new SupplyModel();
-        toCreate.setSupplier(supplier);
-        toCreate.setSupplyStock(50);
-        toCreate.setDeliveryAddress("Warehouse A");
+    void getByProduct_shouldReturnSupplyList() throws Exception {
+        mockMvc.perform(get("/api/supplies/by-product/{productId}", product.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].product.id").value(product.getId()));
+    }
 
-        Mockito.when(service.createSupply(any(SupplyModel.class))).thenReturn(supply);
+    @WithMockUser(username = "user", roles = {"USER"})
+    @Test
+    void createSupply_shouldPersistAndReturn() throws Exception {
+        // Clear existing
+        supplyRepository.deleteAll();
+
+        SupplyModel toCreate = new SupplyModel();
+        SupplierManagementModel supRef = new SupplierManagementModel();
+        supRef.setPhoneNumber(supplier.getPhoneNumber());
+        toCreate.setSupplier(supRef);
+        ProductManagementModel prodRef = new ProductManagementModel();
+        prodRef.setId(product.getId());
+        toCreate.setProduct(prodRef);
+        toCreate.setSupplyStock(30);
+        toCreate.setDeliveryAddress("Warehouse B");
 
         mockMvc.perform(post("/api/supplies")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(toCreate)))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10));
+                .andExpect(jsonPath("$.supplier.phoneNumber").value(supplier.getPhoneNumber()))
+                .andExpect(jsonPath("$.product.id").value(product.getId()))
+                .andExpect(jsonPath("$.supplyStock").value(30));
     }
 
     @WithMockUser(username = "user", roles = {"USER"})
     @Test
-    void testUpdateSupply() throws Exception {
+    void updateSupply_shouldChangeFields() throws Exception {
         SupplyModel updates = new SupplyModel();
-        updates.setDeliveryAddress("New Addr");
+        updates.setSupplyStock(100);
 
-        Mockito.when(service.updateSupply(eq(10), any(SupplyModel.class)))
-                .thenReturn(supply);
-
-        mockMvc.perform(put("/api/supplies/10")
+        mockMvc.perform(put("/api/supplies/{id}", supply.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updates)))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.deliveryAddress").value("Warehouse A"));
+                .andExpect(jsonPath("$.supplyStock").value(100));
+
+        SupplyModel updated = supplyRepository.findById(supply.getId()).orElseThrow();
+        assertThat(updated.getSupplyStock()).isEqualTo(100);
     }
 
     @WithMockUser(username = "user", roles = {"USER"})
     @Test
-    void testDeleteSupply() throws Exception {
-        mockMvc.perform(delete("/api/supplies/10"))
-                .andDo(print())
+    void deleteSupply_shouldRemoveRecord() throws Exception {
+        mockMvc.perform(delete("/api/supplies/{id}", supply.getId()))
                 .andExpect(status().isNoContent());
 
-        verify(service).deleteSupply(10);
+        assertThat(supplyRepository.findById(supply.getId())).isEmpty();
     }
 }

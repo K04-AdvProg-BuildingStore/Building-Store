@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.service.PurchaseHistoryService;
 import id.ac.ui.cs.advprog.buildingstore.CustomerManagement.dto.PurchaseHistoryViewDTO;
 import org.slf4j.Logger;
@@ -29,8 +30,13 @@ public class PurchaseHistoryController {
     @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN', 'USER')")
     public ResponseEntity<List<PurchaseHistoryViewDTO>> getPurchaseHistory(@PathVariable Integer customerId) {
         logger.info("Received request for purchase history of customer ID: {}", customerId);
-        List<PurchaseHistoryViewDTO> history = service.getCustomerPurchaseHistoryById(customerId);
-        logger.info("Returning {} purchase history records", history.size());
-        return ResponseEntity.ok(history);
+        try {
+            List<PurchaseHistoryViewDTO> history = service.getCustomerPurchaseHistoryById(customerId);
+            logger.info("Returning {} purchase history records", history.size());
+            return ResponseEntity.ok(history);
+        } catch (Exception e) {
+            logger.error("Error retrieving purchase history: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

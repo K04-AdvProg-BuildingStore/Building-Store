@@ -34,9 +34,9 @@ public class InstallmentPaymentStrategy implements PaymentStrategy {
 
         String status = salesTransactionService.getStatus(transactionId);
 
-        // Check that transaction is in PENDING status
-        if (!status.equalsIgnoreCase("PENDING")) {
-            throw new IllegalStateException("Payments can only be made to PENDING transactions.");
+        // Check transaction status
+        if (status.equalsIgnoreCase("PAID") || status.equalsIgnoreCase("FULL")) {
+            throw new IllegalStateException("This transaction is already paid in full.");
         }
 
         BigDecimal transactionTotal = salesTransactionService.getTotalAmount(transactionId);
@@ -47,11 +47,12 @@ public class InstallmentPaymentStrategy implements PaymentStrategy {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .add(payment.getAmount());
 
-        // If total paid amount meets or exceeds transaction total, mark as FULL
+        // If total paid amount meets or exceeds transaction total, mark as PAID
         if (totalPaid.compareTo(transactionTotal) >= 0) {
             salesTransactionService.markAsPaid(transactionId);
+        } else {
+            salesTransactionService.markAsPartiallyPaid(transactionId);
         }
-        // Otherwise, it remains in PENDING status
 
         return payment;
     }
