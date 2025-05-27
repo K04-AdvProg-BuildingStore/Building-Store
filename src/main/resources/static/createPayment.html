@@ -222,13 +222,19 @@
             if (this.value === 'FULL') {
                 amountInput.value = remainingAmount.toFixed(2);
                 amountInput.readOnly = true;
+                amountInput.removeAttribute('max');
             } else if (this.value === 'INSTALLMENT') {
                 amountInput.value = '';
                 amountInput.readOnly = false;
-                amountInput.max = remainingAmount;
+                if (remainingAmount > 0) {
+                    amountInput.max = remainingAmount;
+                } else {
+                    amountInput.removeAttribute('max');
+                }
             } else {
                 amountInput.value = '';
                 amountInput.readOnly = true;
+                amountInput.removeAttribute('max');
             }
         });
 
@@ -301,3 +307,4 @@
     </script>
 </body>
 </html>
+
