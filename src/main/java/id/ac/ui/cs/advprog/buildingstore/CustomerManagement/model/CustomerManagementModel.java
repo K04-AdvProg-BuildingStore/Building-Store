@@ -20,8 +20,7 @@ public class CustomerManagementModel {
     private String name;
 
     @Column(unique = true, nullable = false)
-    private String phoneNumber;  // Used as primary identifier
-
+    private String phoneNumber;
     private String email;
 
     private String gender;
