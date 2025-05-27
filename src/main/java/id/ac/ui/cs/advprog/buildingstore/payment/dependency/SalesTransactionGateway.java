@@ -7,5 +7,5 @@ public interface SalesTransactionGateway {
     String getStatus(Integer transactionId);
     void markAsPaid(Integer transactionId);
     void markAsPartiallyPaid(Integer transactionId);
-    BigDecimal getTotalAmount(Integer transactionId); // placeholder value for now
+    BigDecimal getTotalAmount(Integer transactionId);
 }

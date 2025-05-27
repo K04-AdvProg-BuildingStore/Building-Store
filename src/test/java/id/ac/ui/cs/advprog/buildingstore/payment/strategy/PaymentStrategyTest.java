@@ -108,7 +108,7 @@ class PaymentStrategyTest {
             fullPaymentStrategy.execute(fullPayment);
         });
 
-        assertEquals("Payments can only be made to PENDING transactions.", exception.getMessage());
+        assertEquals("This transaction is already paid in full.", exception.getMessage());
         verify(salesTransactionGateway, never()).markAsPaid(any());
     }
 
@@ -208,7 +208,7 @@ class PaymentStrategyTest {
             installmentPaymentStrategy.execute(installmentPayment);
         });
 
-        assertEquals("Payments can only be made to PENDING transactions.", exception.getMessage());
+        assertEquals("This transaction is already paid in full.", exception.getMessage());
         verify(salesTransactionGateway, never()).markAsPaid(any());
     }
 }

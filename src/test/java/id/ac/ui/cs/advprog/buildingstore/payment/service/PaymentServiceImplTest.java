@@ -40,6 +40,9 @@ class PaymentServiceImplTest {
     @Mock
     private PaymentMetricService metricService;
 
+    @Mock
+    private SalesTransactionGateway salesTransactionGatewayMock;
+
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
@@ -75,7 +78,8 @@ class PaymentServiceImplTest {
         paymentService = new PaymentServiceImpl(
                 paymentRepository,
                 Arrays.asList(fullPaymentStrategy, installmentPaymentStrategy),
-                metricService);
+                metricService,
+                salesTransactionGatewayMock);
     }
 
     @Test
@@ -167,10 +171,22 @@ class PaymentServiceImplTest {
 
     @Test
     void testDelete() {
-        doNothing().when(paymentRepository).deleteById(paymentId);
+        UUID paymentId = UUID.randomUUID();
+        Payment payment = Payment.builder()
+                .id(paymentId)
+                .amount(BigDecimal.valueOf(100000))
+                .status(PaymentStatus.FULL)
+                .method("Credit Card")
+                .salesTransactionId(12345)
+                .build();
 
+        // Mock the repository to return the payment when findById is called
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(payment));
+
+        // Call the method
         paymentService.delete(paymentId);
 
+        // Verify that deleteById was called with the correct ID
         verify(paymentRepository).deleteById(paymentId);
     }
 }
