@@ -81,7 +81,7 @@ public class SupplyControllerTest {
         supply = supplyRepository.save(supply);
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void listAllSupplies_shouldReturnSavedSupply() throws Exception {
         mockMvc.perform(get("/api/supplies"))
@@ -91,7 +91,7 @@ public class SupplyControllerTest {
                 .andExpect(jsonPath("$[0].product.id").value(product.getId()));
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void getSupplyById_shouldReturnSupply() throws Exception {
         mockMvc.perform(get("/api/supplies/{id}", supply.getId()))
@@ -100,7 +100,7 @@ public class SupplyControllerTest {
                 .andExpect(jsonPath("$.deliveryAddress").value("Warehouse A"));
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void getBySupplierPhone_shouldReturnSupplyList() throws Exception {
         mockMvc.perform(get("/api/supplies/by-supplier-phone/{phone}", supplier.getPhoneNumber()))
@@ -108,7 +108,7 @@ public class SupplyControllerTest {
                 .andExpect(jsonPath("$[0].supplier.id").value(supplier.getId()));
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void getByProduct_shouldReturnSupplyList() throws Exception {
         mockMvc.perform(get("/api/supplies/by-product/{productId}", product.getId()))
@@ -116,7 +116,7 @@ public class SupplyControllerTest {
                 .andExpect(jsonPath("$[0].product.id").value(product.getId()));
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void createSupply_shouldPersistAndReturn() throws Exception {
         // Clear existing
@@ -141,7 +141,7 @@ public class SupplyControllerTest {
                 .andExpect(jsonPath("$.supplyStock").value(30));
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void updateSupply_shouldChangeFields() throws Exception {
         SupplyModel updates = new SupplyModel();
@@ -157,7 +157,7 @@ public class SupplyControllerTest {
         assertThat(updated.getSupplyStock()).isEqualTo(100);
     }
 
-    @WithMockUser(username = "user", roles = {"USER"})
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
     @Test
     void deleteSupply_shouldRemoveRecord() throws Exception {
         mockMvc.perform(delete("/api/supplies/{id}", supply.getId()))
@@ -166,3 +166,4 @@ public class SupplyControllerTest {
         assertThat(supplyRepository.findById(supply.getId())).isEmpty();
     }
 }
+

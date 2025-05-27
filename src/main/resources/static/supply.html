@@ -217,6 +217,7 @@
             headers: getAuthHeaders()
         })
             .then(res => {
+                if (res.status === 403) throw new Error('You are not authorized');
                 if (!res.ok) throw new Error('Failed to fetch product IDs');
                 return res.json();
             })
@@ -244,6 +245,7 @@
             headers: getAuthHeaders()
         })
             .then(res => {
+                if (res.status === 403) throw new Error('You are not authorized');
                 if (!res.ok) throw new Error('Failed to fetch supplies');
                 return res.json();
             })
@@ -266,7 +268,7 @@
             })
             .catch(err => {
                 console.error('Error loading supplies:', err);
-                alert('Failed to load supplies. Please try again.');
+                alert(err.message === 'You are not authorized' ? err.message : 'Failed to load supplies. Please try again.');
             });
     }
 
@@ -297,6 +299,7 @@
             body: JSON.stringify(payload)
         })
             .then(res => {
+                if (res.status === 403) throw new Error('You are not authorized');
                 if (!res.ok) throw new Error(res.status === 400 ? 'Invalid data' : 'Operation failed');
                 return res.json();
             })
@@ -315,6 +318,7 @@
             headers: getAuthHeaders()
         })
             .then(res => {
+                if (res.status === 403) throw new Error('You are not authorized');
                 if (!res.ok) throw new Error('Supply not found');
                 return res.json();
             })
@@ -341,6 +345,7 @@
             headers: getAuthHeaders()
         })
             .then(res => {
+                if (res.status === 403) throw new Error('You are not authorized');
                 if (!res.ok) throw new Error('Delete failed');
                 loadSupplies();
             })
